@@ -1,4 +1,4 @@
-from backend.networks import Model
+#from backend.networks import Model
 import matplotlib.pyplot as plt
 import numpy as np
 #from backend.simulation_tools import Simulator

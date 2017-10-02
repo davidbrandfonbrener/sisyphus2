@@ -12,7 +12,8 @@ import matplotlib.pyplot as plt
 # Builds a dictionary of parameters that specifies the information
 # about an instance of this specific task
 def set_params(n_in = 1, n_out = 1, n_steps = 200, coherences=[.5], stim_noise = 0, rec_noise = 0, L1_rec = 0, L2_firing_rate = 0,
-                    sample_size = 128, epochs = 100, N_rec = 50, dale_ratio=0.8, tau=100.0, dt = 10.0, biases = False, task='n_back', rt_version=False):
+                    sample_size = 128, epochs = 100, N_rec = 50, dale_ratio=0.8, tau=100.0, dt = 10.0, biases = True,
+               task='n_back', rt_version=False):
     params = dict()
     params['N_in']             = n_in
     params['N_out']            = n_out
@@ -195,18 +196,18 @@ if __name__ == "__main__":
     
     #model params
     n_in = 1
-    n_hidden = 50 
+    n_hidden  = 50
     n_out = 1
     #n_steps = 80 
     tau = 100.0 #As double
     dt = 20.0  #As double
     dale_ratio = None
     rec_noise = 0.0
-    stim_noise = 0.4
+    stim_noise = 0.1
     batch_size = 128
     #var_delay_length = 50
     cohs = [.01,.05,.1,.2,.4]
-    rt_version = False
+    rt_version = True
     
     #train params
     learning_rate = .0001
@@ -227,7 +228,7 @@ if __name__ == "__main__":
     
     
     
-    #model.train(sess, generator, learning_rate = learning_rate, training_iters = training_iters, weights_path = weights_path,display_step=display_step)
+    model.train(sess, generator, learning_rate = learning_rate, training_iters = training_iters, weights_path = weights_path,display_step=display_step)
 
     data = generator.next()
     

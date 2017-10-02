@@ -1,7 +1,7 @@
 import numpy as np
 import itertools
-from backend.simulation_tools import Simulator
-from tasks import flip_flop
+from sisyphus2.backend.simulation_tools import Simulator
+from sisyphus2.tasks import flip_flop
 import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
 import matplotlib.animation

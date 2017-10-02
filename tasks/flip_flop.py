@@ -1,8 +1,8 @@
 import numpy as np
 import tensorflow as tf
-from backend import networks
-import backend.visualizations as V
-from backend.simulation_tools import Simulator
+from sisyphus2.backend import networks
+import sisyphus2.backend.visualizations as V
+#from backend.simulation_tools import Simulator
 
 # flip_flop task
 
