@@ -3,6 +3,7 @@
 import numpy as np
 import tensorflow as tf
 from backend.networks import Model
+from backend import analysis
 #import backend.visualizations as V
 from backend.simulation_tools import Simulator
 import matplotlib.pyplot as plt
@@ -71,6 +72,12 @@ def build_train_trials(params):
     x_train = x_train + stim_noise * np.random.randn(batch_size, n_steps, n_in)
     params['input_times'] = input_times
     params['output_times'] = output_times
+
+    #plt.plot(range(len(x_train[0,:,0])), x_train[0,:,0])
+    #plt.show()
+    #plt.plot(range(len(y_train[0, :, 0])), y_train[0, :, 0])
+    #plt.show()
+
     return x_train, y_train, mask
     
 
@@ -193,7 +200,7 @@ if __name__ == "__main__":
     #n_steps = 80 
     tau = 100.0 #As double
     dt = 20.0  #As double
-    dale_ratio = 0
+    dale_ratio = None
     rec_noise = 0.0
     stim_noise = 0.4
     batch_size = 128
@@ -215,29 +222,35 @@ if __name__ == "__main__":
                         dale_ratio=dale_ratio, tau=tau, dt = dt, task='n_back',rt_version=rt_version)
     
     generator = generate_train_trials(params)
-    #model = Model(n_in, n_hidden, n_out, n_steps, tau, dt, dale_ratio, rec_noise, batch_size)
     model = Model(params)
     sess = tf.Session()
     
     
     
-    model.train(sess, generator, learning_rate = learning_rate, training_iters = training_iters, weights_path = weights_path,display_step=display_step)
+    #model.train(sess, generator, learning_rate = learning_rate, training_iters = training_iters, weights_path = weights_path,display_step=display_step)
 
     data = generator.next()
-    #output,states = model.test(sess, input, weights_path = weights_path)
     
     
-    W = model.W_rec.eval(session=sess)
-    U = model.W_in.eval(session=sess)
-    Z = model.W_out.eval(session=sess)
-    brec = model.b_rec.eval(session=sess)
-    bout = model.b_out.eval(session=sess)
+    #W = model.W_rec.eval(session=sess)
+    #U = model.W_in.eval(session=sess)
+    #Z = model.W_out.eval(session=sess)
+    #brec = model.b_rec.eval(session=sess)
+    #bout = model.b_out.eval(session=sess)
     
     sim = Simulator(params, weights_path=weights_path)
     output,states = sim.run_trial(data[0][0,:,:],t_connectivity=False)
     
     x_test,y_test,mask = build_test_trials(params)
-    mup,mdown,choice,resp = white_noise_test(x_test)
-    coh_out = coherence_test(np.arange(-.2,.2,.01))
+    mup,mdown,choice,resp = white_noise_test(sim, x_test)
+    coh_out = coherence_test(sim, np.arange(-.2,.2,.01))
+
+    for i in range(5):
+        trial = data[0][i,:,:]
+
+        points = analysis.hahnloser_fixed_point(sim, trial)
+
+        analysis.plot_states(states=states, I=points)
+
     
     sess.close()

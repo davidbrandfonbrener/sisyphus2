@@ -8,27 +8,48 @@ import matplotlib.animation
 
 
 def plot_states(states, I):
-    pca = PCA(n_components=4)
-    pca.fit(states[:, 0, :])
-    reduced = pca.transform(states[:, 0, :])[:, :2]
+    if I == []:
+        pca = PCA(n_components=4)
+        pca.fit(states[:, 0, :])
+        reduced = pca.transform(states[:, 0, :])[:, :2]
 
-    I_pca = pca.transform(I)
+        fig, ax = plt.subplots()
+        a, b = [], []
+        sc = ax.scatter(a, b)
+        plt.xlim(1.1 * min(reduced[:, 0]), 1.1 * max(reduced[:, 0]))
+        plt.ylim(1.1 * min(reduced[:, 1]), 1.1 * max(reduced[:, 1]))
 
-    fig, ax = plt.subplots()
-    a, b = [I_pca[0,0]], [I_pca[0,1]]
-    sc = ax.scatter(a, b)
-    plt.xlim(1.1 * min(reduced[:, 0]), 1.1 * max(reduced[:, 0]))
-    plt.ylim(1.1 * min(reduced[:, 1]), 1.1 * max(reduced[:, 1]))
+        def animate(i):
+            a.append(reduced[i, 0])
+            b.append(reduced[i, 1])
+            sc.set_offsets(np.c_[a, b])
 
-    def animate(i):
-        a.append(reduced[i, 0])
-        b.append(reduced[i, 1])
-        sc.set_offsets(np.c_[a, b])
-        sc.set_color(['r'] + [str(.99 * float(x) / len(reduced[:, 0])) for x in range(len(a))])
+        ani = matplotlib.animation.FuncAnimation(fig, animate,
+                                                 frames=len(reduced[:, 0]), interval=100, repeat=False)
+        plt.show()
 
-    ani = matplotlib.animation.FuncAnimation(fig, animate,
-                                             frames=len(reduced[:, 0]), interval=100, repeat=False)
-    plt.show()
+    else:
+        pca = PCA(n_components=4)
+        pca.fit(states[:, 0, :])
+        reduced = pca.transform(states[:, 0, :])[:, :2]
+
+        I_pca = pca.transform(I)
+
+        fig, ax = plt.subplots()
+        a, b = [I_pca[0,0]], [I_pca[0,1]]
+        sc = ax.scatter(a, b)
+        plt.xlim(1.1 * min(reduced[:, 0]), 1.1 * max(reduced[:, 0]))
+        plt.ylim(1.1 * min(reduced[:, 1]), 1.1 * max(reduced[:, 1]))
+
+        def animate(i):
+            a.append(reduced[i, 0])
+            b.append(reduced[i, 1])
+            sc.set_offsets(np.c_[a, b])
+            sc.set_color(['r'] + [str(.99 * float(x) / len(reduced[:, 0])) for x in range(len(a))])
+
+        ani = matplotlib.animation.FuncAnimation(fig, animate,
+                                                 frames=len(reduced[:, 0]), interval=100, repeat=False)
+        plt.show()
     return
 
 # input: simulator object, params dict
