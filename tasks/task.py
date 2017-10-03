@@ -29,20 +29,20 @@ class Task(object):
 
 class rdm(Task):
 
-    default_params = dict(N_in = 1, N_out = 1, N_steps = 200, coherences=[.5], stim_noise = 0, rec_noise = 0,
+    default_params = dict(N_in = 1, N_out = 1, N_steps = 200, coherences=[.5], stim_noise = 0.4, rec_noise = 0,
                             L1_rec = 0, L2_firing_rate = 0, N_batch = 128,
-                            epochs = 100, N_rec = 50, dale_ratio=0.8,
+                            epochs = 100, N_rec = 50, dale_ratio=None,
                             tau=100.0, dt = 10.0, biases = True,
                             task='n_back', rt_version=False)
 
     def build_train_batch(self):
 
-        input_times = np.zeros([self.N_batch, self.n_in], dtype=np.int)
-        output_times = np.zeros([self.N_batch, self.n_out], dtype=np.int)
+        input_times = np.zeros([self.N_batch, self.N_in], dtype=np.int)
+        output_times = np.zeros([self.N_batch, self.N_out], dtype=np.int)
 
-        x_train = np.zeros([self.N_batch, self.n_steps, self.n_in])
-        y_train = np.zeros([self.N_batch, self.n_steps, self.n_out])
-        mask = np.ones((self.N_batch, self.n_steps, self.n_in))
+        x_train = np.zeros([self.N_batch, self.N_steps, self.N_in])
+        y_train = np.zeros([self.N_batch, self.N_steps, self.N_out])
+        mask = np.ones((self.N_batch, self.N_steps, self.N_in))
 
         stim_time = range(40, 140)
         if self.rt_version:
@@ -58,7 +58,7 @@ class rdm(Task):
             x_train[ii, stim_time, 0] = stims[ii]
             y_train[ii, out_time, 0] = dirs[ii]
 
-        x_train = x_train + self.stim_noise * np.random.randn(self.N_batch, self.n_steps, self.n_in)
+        x_train = x_train + self.stim_noise * np.random.randn(self.N_batch, self.N_steps, self.N_in)
         self.input_times = input_times
         self.output_times = output_times
 
