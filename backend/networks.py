@@ -35,7 +35,7 @@ class Model(object):
 
         # Dale matrix
         dale_vec = np.ones(N_rec)
-        if self.dale_ratio:
+        if self.dale_ratio is not None:
             dale_vec[int(self.dale_ratio * N_rec):] = -1
             self.dale_rec = np.diag(dale_vec)
             dale_vec[int(self.dale_ratio * N_rec):] = 0
