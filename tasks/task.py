@@ -29,7 +29,7 @@ class Task(object):
 
 class rdm(Task):
 
-    default_params = dict(n_in = 1, n_out = 1, n_steps = 200, coherences=[.5], stim_noise = 0, rec_noise = 0,
+    default_params = dict(N_in = 1, N_out = 1, N_steps = 200, coherences=[.5], stim_noise = 0, rec_noise = 0,
                             L1_rec = 0, L2_firing_rate = 0, batch_size = 128,
                             sample_size = 128, epochs = 100, N_rec = 50, dale_ratio=0.8,
                             tau=100.0, dt = 10.0, biases = True,
@@ -109,6 +109,72 @@ class flip_flop(Task):
             mask[sample, :, 0] = [0.0 if (x[0] == .1 and x[1] == .1) else 1.0 for x in y_train[sample]]
 
         x_train = x_train + self.stim_noise * np.random.randn(self.N_batch, self.N_steps, self.N_in)
+        self.input_times = input_times
+        self.output_times = output_times
+
+        return x_train, y_train, mask
+
+
+
+
+
+
+
+
+class delayed_memory(Task):
+    default_params = dict(N_in = 2, N_out = 2, input_wait = 3, mem_gap = 4, stim_dur = 3, out_dur=5,
+                    var_delay_length = 0, stim_noise = 0, rec_noise = .1, L1_rec = 0, L2_firing_rate = 1,
+                    sample_size = 128, epochs = 100, N_rec = 50, dale_ratio=0.8, tau=100.0, dt = 10.0, task='xor')
+
+    def build_train_batch(self):
+        setattr(self, 'N_steps',
+                self.input_wait + self.stim_dur + self.mem_gap +
+                self.var_delay_length + self.stim_dur + self.out_dur)
+
+        if self.var_delay_length == 0:
+            var_delay = np.zeros(sample_size, dtype=int)
+        else:
+            var_delay = np.random.randint(self.var_delay_length, size=self.ample_size) + 1
+
+        seq_dur = self.input_wait + self.stim_dur + self.mem_gap + self.var_delay_length + \
+                  self.stim_dur + self.out_dur
+
+        input_pattern = np.random.randint(2, size=(self.sample_size, 2))
+        # input_order = np.random.randint(2,size=(sample_size,2))
+        if task == 'xor':
+            output_pattern = (np.sum(input_pattern, 1) == 1).astype('float')  # xor
+        elif task == 'or':
+            output_pattern = (np.sum(input_pattern, 1) >= 1).astype('float')  # or
+        elif task == 'and':
+            output_pattern = (np.sum(input_pattern, 1) >= 2).astype('float')  # and
+        elif task == 'memory_saccade':
+            output_pattern = input_pattern[:,0]
+            # input_pattern[range(np.shape(input_pattern)[0]),input_order[:,0]]
+            # memory saccade with distractor
+
+        input_times = np.zeros([self.sample_size, self.N_in], dtype=np.int)
+        output_times = np.zeros([self.sample_size, 1], dtype=np.int)
+
+        x_train = np.zeros([self.sample_size, seq_dur, self.N_in])
+        y_train = 0.1 * np.ones([self.sample_size, seq_dur, self.N_out])
+        mask = np.ones((self.sample_size, seq_dur, self.N_out))
+
+        for sample in np.arange(self.sample_size):
+            in_period1 = range(self.input_wait, (self.input_wait + self.stim_dur))
+            in_period2 = range(self.input_wait + self.stim_dur + self.mem_gap + var_delay[sample],
+                               (self.input_wait + self.stim_dur + self.mem_gap + var_delay[sample] + self.stim_dur))
+            x_train[sample, in_period1, input_pattern[sample, 0]] = 1
+            x_train[sample, in_period2, input_pattern[sample, 1]] = 1  # input_pattern[sample,input_order[sample,1]]
+
+            out_period = range(self.input_wait + self.stim_dur + self.mem_gap + var_delay[sample] + self.stim_dur,
+                               self.input_wait + self.stim_dur + self.mem_gap + var_delay[sample] +
+                               self.stim_dur + self.out_dur)
+            y_train[sample, out_period, output_pattern[sample]] = 1
+            mask[sample, range(self.input_wait + self.stim_dur + self.mem_gap + var_delay[sample]
+                               + self.stim_dur + self.out_dur, self.seq_dur), :] = 0
+
+
+        x_train = x_train + stim_noise * np.random.randn(sample_size, seq_dur, 2)
         self.input_times = input_times
         self.output_times = output_times
 

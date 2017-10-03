@@ -228,7 +228,8 @@ if __name__ == "__main__":
     
     
     
-    model.train(sess, generator, learning_rate = learning_rate, training_iters = training_iters, weights_path = weights_path,display_step=display_step)
+    model.train(sess, generator, learning_rate = learning_rate, training_iters = training_iters,
+                weights_path = weights_path,display_step=display_step)
 
     data = generator.next()
     
