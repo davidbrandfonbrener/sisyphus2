@@ -93,7 +93,7 @@ class Simulator(object):
 
 
     # apply the RNN to a whole batch of inputs
-    def run_trials(self, trial_input, batch_size, t_connectivity = None):
+    def run_trials(self, trial_input, batch_size, t_connectivity = None, use_input = True):
 
         rnn_inputs = np.split(trial_input, trial_input.shape[1], axis=1)
         state = np.expand_dims(self.init_state[0, :], 0)
@@ -102,9 +102,9 @@ class Simulator(object):
         rnn_states = []
         for rnn_input in rnn_inputs:
             if t_connectivity:
-                output, state = self.rnn_step(state, rnn_input, t_connectivity[i])
+                output, state = self.rnn_step(state, rnn_input, t_connectivity[i], use_input)
             else:
-                output, state = self.rnn_step(state, rnn_input, np.ones_like(self.W_rec))
+                output, state = self.rnn_step(state, rnn_input, np.ones_like(self.W_rec), use_input)
 
             rnn_outputs.append(output)
             rnn_states.append(state)

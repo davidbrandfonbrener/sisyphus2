@@ -123,8 +123,8 @@ class flip_flop(Task):
 
 class delayed_memory(Task):
     default_params = dict(N_in = 2, N_out = 2, input_wait = 3, mem_gap = 4, stim_dur = 3, out_dur=5,
-                    var_delay_length = 0, stim_noise = 0, rec_noise = 0, L1_rec = 0, L2_firing_rate = 1,
-                    N_batch = 128, epochs = 100, N_rec = 50, dale_ratio=0.8, tau=100.0, dt = 10.0, task='xor',
+                    var_delay_length = 20, stim_noise = 0, rec_noise = 0, L1_rec = 0, L2_firing_rate = 0,
+                    N_batch = 128, epochs = 100, N_rec = 50, dale_ratio=None, tau=100.0, dt = 10.0, task='xor',
                     biases = True)
 
     def build_train_batch(self):
@@ -135,7 +135,7 @@ class delayed_memory(Task):
         if self.var_delay_length == 0:
             var_delay = np.zeros(self.N_batch, dtype=int)
         else:
-            var_delay = np.random.randint(self.var_delay_length, size=self.ample_size) + 1
+            var_delay = np.random.randint(self.var_delay_length, size=self.N_batch) + 1
 
         seq_dur = self.input_wait + self.stim_dur + self.mem_gap + self.var_delay_length + \
                   self.stim_dur + self.out_dur
