@@ -30,19 +30,19 @@ class Task(object):
 class rdm(Task):
 
     default_params = dict(N_in = 1, N_out = 1, N_steps = 200, coherences=[.5], stim_noise = 0, rec_noise = 0,
-                            L1_rec = 0, L2_firing_rate = 0, batch_size = 128,
-                            sample_size = 128, epochs = 100, N_rec = 50, dale_ratio=0.8,
+                            L1_rec = 0, L2_firing_rate = 0, N_batch = 128,
+                            epochs = 100, N_rec = 50, dale_ratio=0.8,
                             tau=100.0, dt = 10.0, biases = True,
                             task='n_back', rt_version=False)
 
     def build_train_batch(self):
 
-        input_times = np.zeros([self.batch_size, self.n_in], dtype=np.int)
-        output_times = np.zeros([self.batch_size, self.n_out], dtype=np.int)
+        input_times = np.zeros([self.N_batch, self.n_in], dtype=np.int)
+        output_times = np.zeros([self.N_batch, self.n_out], dtype=np.int)
 
-        x_train = np.zeros([self.batch_size, self.n_steps, self.n_in])
-        y_train = np.zeros([self.batch_size, self.n_steps, self.n_out])
-        mask = np.ones((self.batch_size, self.n_steps, self.n_in))
+        x_train = np.zeros([self.N_batch, self.n_steps, self.n_in])
+        y_train = np.zeros([self.N_batch, self.n_steps, self.n_out])
+        mask = np.ones((self.N_batch, self.n_steps, self.n_in))
 
         stim_time = range(40, 140)
         if self.rt_version:
@@ -50,15 +50,15 @@ class rdm(Task):
         else:
             out_time = range(160, 200)
 
-        dirs = np.random.choice([-1, 1], replace=True, size=(self.batch_size))
-        cohs = np.random.choice(self.coherences, replace=True, size=(self.batch_size))
+        dirs = np.random.choice([-1, 1], replace=True, size=(self.N_batch))
+        cohs = np.random.choice(self.coherences, replace=True, size=(self.N_batch))
         stims = dirs * cohs;
 
-        for ii in range(self.batch_size):
+        for ii in range(self.N_batch):
             x_train[ii, stim_time, 0] = stims[ii]
             y_train[ii, out_time, 0] = dirs[ii]
 
-        x_train = x_train + self.stim_noise * np.random.randn(self.batch_size, self.n_steps, self.n_in)
+        x_train = x_train + self.stim_noise * np.random.randn(self.N_batch, self.n_steps, self.n_in)
         self.input_times = input_times
         self.output_times = output_times
 
@@ -74,7 +74,7 @@ class flip_flop(Task):
                N_turns = 3, input_wait = 3, quiet_gap = 4, stim_dur = 3,
                var_delay_length = 0, stim_noise = 0.1, rec_noise = .1,
                N_batch = 128, dale_ratio=0.8, dt = 10, tau = 100,
-               biases = False, seed=None)
+               biases = True, seed=None)
 
     def build_train_batch(self):
 
@@ -123,8 +123,9 @@ class flip_flop(Task):
 
 class delayed_memory(Task):
     default_params = dict(N_in = 2, N_out = 2, input_wait = 3, mem_gap = 4, stim_dur = 3, out_dur=5,
-                    var_delay_length = 0, stim_noise = 0, rec_noise = .1, L1_rec = 0, L2_firing_rate = 1,
-                    sample_size = 128, epochs = 100, N_rec = 50, dale_ratio=0.8, tau=100.0, dt = 10.0, task='xor')
+                    var_delay_length = 0, stim_noise = 0, rec_noise = 0, L1_rec = 0, L2_firing_rate = 1,
+                    N_batch = 128, epochs = 100, N_rec = 50, dale_ratio=0.8, tau=100.0, dt = 10.0, task='xor',
+                    biases = True)
 
     def build_train_batch(self):
         setattr(self, 'N_steps',
@@ -132,34 +133,36 @@ class delayed_memory(Task):
                 self.var_delay_length + self.stim_dur + self.out_dur)
 
         if self.var_delay_length == 0:
-            var_delay = np.zeros(sample_size, dtype=int)
+            var_delay = np.zeros(self.N_batch, dtype=int)
         else:
             var_delay = np.random.randint(self.var_delay_length, size=self.ample_size) + 1
 
         seq_dur = self.input_wait + self.stim_dur + self.mem_gap + self.var_delay_length + \
                   self.stim_dur + self.out_dur
 
-        input_pattern = np.random.randint(2, size=(self.sample_size, 2))
-        # input_order = np.random.randint(2,size=(sample_size,2))
-        if task == 'xor':
-            output_pattern = (np.sum(input_pattern, 1) == 1).astype('float')  # xor
-        elif task == 'or':
-            output_pattern = (np.sum(input_pattern, 1) >= 1).astype('float')  # or
-        elif task == 'and':
-            output_pattern = (np.sum(input_pattern, 1) >= 2).astype('float')  # and
-        elif task == 'memory_saccade':
+        input_pattern = np.random.randint(2, size=(self.N_batch, 2))
+        # input_order = np.random.randint(2,size=(N_batch,2))
+        if self.task == 'xor':
+            output_pattern = (np.sum(input_pattern, 1) == 1).astype('int')  # xor
+        elif self.task == 'or':
+            output_pattern = (np.sum(input_pattern, 1) >= 1).astype('int')  # or
+        elif self.task == 'and':
+            output_pattern = (np.sum(input_pattern, 1) >= 2).astype('int')  # and
+        elif self.task == 'memory_saccade':
             output_pattern = input_pattern[:,0]
             # input_pattern[range(np.shape(input_pattern)[0]),input_order[:,0]]
             # memory saccade with distractor
+        else:
+            output_pattern = input_pattern[:, 0]
 
-        input_times = np.zeros([self.sample_size, self.N_in], dtype=np.int)
-        output_times = np.zeros([self.sample_size, 1], dtype=np.int)
+        input_times = np.zeros([self.N_batch, self.N_in], dtype=np.int)
+        output_times = np.zeros([self.N_batch, 1], dtype=np.int)
 
-        x_train = np.zeros([self.sample_size, seq_dur, self.N_in])
-        y_train = 0.1 * np.ones([self.sample_size, seq_dur, self.N_out])
-        mask = np.ones((self.sample_size, seq_dur, self.N_out))
+        x_train = np.zeros([self.N_batch, seq_dur, self.N_in])
+        y_train = 0.1 * np.ones([self.N_batch, seq_dur, self.N_out])
+        mask = np.ones((self.N_batch, seq_dur, self.N_out))
 
-        for sample in np.arange(self.sample_size):
+        for sample in np.arange(self.N_batch):
             in_period1 = range(self.input_wait, (self.input_wait + self.stim_dur))
             in_period2 = range(self.input_wait + self.stim_dur + self.mem_gap + var_delay[sample],
                                (self.input_wait + self.stim_dur + self.mem_gap + var_delay[sample] + self.stim_dur))
@@ -169,12 +172,16 @@ class delayed_memory(Task):
             out_period = range(self.input_wait + self.stim_dur + self.mem_gap + var_delay[sample] + self.stim_dur,
                                self.input_wait + self.stim_dur + self.mem_gap + var_delay[sample] +
                                self.stim_dur + self.out_dur)
+
+            #print sample, out_period, output_pattern[sample]
             y_train[sample, out_period, output_pattern[sample]] = 1
-            mask[sample, range(self.input_wait + self.stim_dur + self.mem_gap + var_delay[sample]
-                               + self.stim_dur + self.out_dur, self.seq_dur), :] = 0
+
+            mask_period = range(self.input_wait + self.stim_dur + self.mem_gap + var_delay[sample]
+                               + self.stim_dur + self.out_dur, seq_dur)
+            mask[sample, mask_period, :] = 0
 
 
-        x_train = x_train + stim_noise * np.random.randn(sample_size, seq_dur, 2)
+        x_train = x_train + self.stim_noise * np.random.randn(self.N_batch, seq_dur, 2)
         self.input_times = input_times
         self.output_times = output_times
 

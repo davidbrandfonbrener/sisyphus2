@@ -26,7 +26,7 @@ class Model(object):
         # Physical parameters
         self.dt = params['dt']
         self.tau = params['tau']
-        self.alpha = params['alpha']
+        self.alpha = self.dt / self.tau
         self.dale_ratio = params['dale_ratio']
         self.rec_noise  = params['rec_noise']
 
