@@ -31,7 +31,7 @@ class Model(object):
         self.rec_noise  = params['rec_noise']
 
         # biases
-        self.biases = params['biases']
+        #self.biases = params['biases']
 
         # Dale matrix
         dale_vec = np.ones(N_rec)
@@ -67,6 +67,14 @@ class Model(object):
         self.L2_firing_rate = params.get('L2_firing_rate', 0)
         self.sussillo_constant = params.get('sussillo_constant', 0)
 
+        # trainable features
+        self.W_in_train = params.get('W_in_train', True)
+        self.W_rec_train = params.get('W_rec_train', True)
+        self.W_out_train = params.get('W_out_train', True)
+        self.b_rec_train = params.get('b_rec_train', True)
+        self.b_out_train = params.get('b_out_train', True)
+        self.init_state_train = params.get('init_state_train', True)
+
         # Tensorflow initializations
         self.x = tf.placeholder("float", [N_batch, N_steps, N_in])
         self.y = tf.placeholder("float", [N_batch, N_steps, N_out])
@@ -89,7 +97,7 @@ class Model(object):
                 tf.get_variable('W_in', [N_rec, N_in],
                                 initializer=tf.constant_initializer(
                                     0.1 * np.random.uniform(-1, 1, size=(self.N_rec, self.N_in))),
-                                trainable=False)
+                                trainable=self.W_in_train)
             # Recurrent weight matrix:
             # (gamma (Dale) or normal (non-Dale) initialization)
             self.W_rec = \
@@ -97,26 +105,20 @@ class Model(object):
                     'W_rec',
                     [N_rec, N_rec],
                     initializer=tf.constant_initializer(self.initial_W()),
-                    trainable=True)
+                    trainable=self.W_rec_train)
             # Output weight matrix:
             # (uniform initialization as in pycog)
             self.W_out = tf.get_variable('W_out', [N_out, N_rec],
                                          initializer=tf.constant_initializer(
                                              0.1 * np.random.uniform(-1, 1, size=(self.N_out, self.N_rec))),
-                                         trainable=False)
+                                         trainable=self.W_out_train)
 
-            if self.biases:
-                # Recurrent bias:
-                self.b_rec = tf.get_variable('b_rec', [N_rec], initializer=tf.constant_initializer(0.0))
-                # Output bias:
-                self.b_out = tf.get_variable('b_out', [N_out], initializer=tf.constant_initializer(0.0))
-            else:
-                # zero Recurrent bias:
-                self.b_rec = tf.get_variable('b_rec', [N_rec], initializer=tf.constant_initializer(0.0),
-                                             trainable=False)
-                # zero Output bias:
-                self.b_out = tf.get_variable('b_out', [N_out], initializer=tf.constant_initializer(0.0),
-                                             trainable=False)
+            # Recurrent bias:
+            self.b_rec = tf.get_variable('b_rec', [N_rec], initializer=tf.constant_initializer(0.0),
+                                         trainable=self.b_rec_train)
+            # Output bias:
+            self.b_out = tf.get_variable('b_out', [N_out], initializer=tf.constant_initializer(0.0),
+                                         trainable=self.b_out_train)
             # ------------------------------------------------
             # Non-trainable variables:
             # Overall connectivity and Dale's law matrices
@@ -409,13 +411,10 @@ class Model(object):
               learning_rate=.001, training_iters=50000,
               batch_size=64, display_step=10, weights_path= None):
 
-        var_list = [self.W_rec, self.W_in, self.W_out,
-                    self.b_rec, self.b_out,
-                    self.init_state]
 
         # train with gradient clipping
         optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
-        grads = optimizer.compute_gradients(self.loss, var_list=var_list)
+        grads = optimizer.compute_gradients(self.loss)
         clipped_grads = [(tf.clip_by_norm(grad, 1.0), var)
                          if grad is not None else (grad, var)
                         for grad, var in grads]
