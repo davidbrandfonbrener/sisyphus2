@@ -234,6 +234,7 @@ if __name__ == "__main__":
     parser.add_argument('-v','--var_delay', help="supply variable memory gap delay", type=int,default=0)
     parser.add_argument('-r','--rec_noise', help ="recurrent noise", type=float,default=0.0)
     parser.add_argument('-t','--training_iters', help="training iterations", type=int,default=300000)
+    parser.add_argument('-ts','--task',help="task type",default='memory_saccade')
     args = parser.parse_args()
     
     #task params
@@ -247,7 +248,7 @@ if __name__ == "__main__":
     var_in_wait = 40
     var_out_gap = 0
     second_in_scale = 0.  #Only one input period or two (e.g. mem saccade no distractor vs with distractor)
-    task = 'memory_saccade'
+    task = args.task
     name = args.task_name
     
     #model params
