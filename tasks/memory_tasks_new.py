@@ -229,7 +229,11 @@ if __name__ == "__main__":
     import argparse
     
     parser = argparse.ArgumentParser()
-    parser.add_argument('mem_gap', help="supply memory gap length", type=int)
+    parser.add_argument('task_name', help="task name", type=str)
+    parser.add_argument('-m','--mem_gap', help="supply memory gap length", type=int,default=50)
+    parser.add_argument('-v','--var_delay', help="supply variable memory gap delay", type=int,default=0)
+    parser.add_argument('-r','--rec_noise', help ="recurrent noise", type=float,default=0.0)
+    parser.add_argument('-t','--training_iters', help="training iterations", type=int,default=300000)
     args = parser.parse_args()
     
     #task params
@@ -239,12 +243,12 @@ if __name__ == "__main__":
     out_gap = 0
     out_dur = 60
     
-    var_delay_length = 50
+    var_delay_length = args.var_delay
     var_in_wait = 40
     var_out_gap = 0
     second_in_scale = 0.  #Only one input period or two (e.g. mem saccade no distractor vs with distractor)
     task = 'memory_saccade'
-    name = 'mem_sac_variable'
+    name = args.task_name
     
     #model params
     n_in = 2 
@@ -254,14 +258,14 @@ if __name__ == "__main__":
     tau = 100.0 #As double
     dt = 20.0  #As double
     dale_ratio = 0
-    rec_noise = 0.0
+    rec_noise = args.rec_noise
     stim_noise = 0.1
     batch_size = 128
     
     
     #train params
     learning_rate = .0001 
-    training_iters = 5000000
+    training_iters = args.training_iters
     display_step = 200
     
     weights_path = '../weights/' + name + '_' + str(mem_gap_length) + '.npz'
