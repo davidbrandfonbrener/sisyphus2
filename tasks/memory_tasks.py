@@ -242,17 +242,19 @@ def demean(s):
     return s-np.mean(s,axis=0)
     
     
-def analysis_and_write(params,weights_path):
+def analysis_and_write(params,weights_path,fig_directory,run_name):
     
     from matplotlib.backends.backend_pdf import PdfPages
     import os
     
+    
+    
     try:
-        os.stat('demo_figures')
+        os.stat(fig_directory)
     except:
-        os.mkdir('demo_figures')
+        os.mkdir(fig_directory)
         
-    pp = PdfPages('demo_figures/demo_analysis_figures.pdf')
+    pp = PdfPages(fig_directory + '/' + run_name + '.pdf')
 
     generator = generate_train_trials(params)
     weights = np.load(weights_path)
@@ -495,13 +497,18 @@ if __name__ == "__main__":
     import argparse
     
     parser = argparse.ArgumentParser()
-    parser.add_argument('task_name', help="task name", type=str)
+    parser.add_argument('run_name', help="task name", type=str)
+    parser.add_argument('fig_directory',help="where to save figures")
     parser.add_argument('-m','--mem_gap', help="supply memory gap length", type=int,default=50)
     parser.add_argument('-v','--var_delay', help="supply variable memory gap delay", type=int,default=0)
     parser.add_argument('-r','--rec_noise', help ="recurrent noise", type=float,default=0.0)
     parser.add_argument('-t','--training_iters', help="training iterations", type=int,default=300000)
     parser.add_argument('-ts','--task',help="task type",default='memory_saccade')
     args = parser.parse_args()
+    
+    #run params
+    run_name = args.run_name
+    fig_directory = args.fig_directory
     
     #task params
     mem_gap_length = args.mem_gap
@@ -515,7 +522,6 @@ if __name__ == "__main__":
     var_out_gap = 0
     second_in_scale = 0.  #Only one input period or two (e.g. mem saccade no distractor vs with distractor)
     task = args.task
-    name = args.task_name
     
     #model params
     n_in = 2 
@@ -535,7 +541,7 @@ if __name__ == "__main__":
     training_iters = args.training_iters
     display_step = 200
     
-    weights_path = '../weights/' + name + '_' + str(mem_gap_length) + '.npz'
+    weights_path = '../weights/' + run_name + '.npz'
     #weights_path = None
     
     params = set_params(epochs=200, sample_size= batch_size, input_wait=input_wait, 
@@ -557,7 +563,7 @@ if __name__ == "__main__":
     model.train(sess, generator, learning_rate = learning_rate, 
                 training_iters = training_iters, weights_path = weights_path)
     
-    analysis_and_write(params,weights_path)
+    analysis_and_write(params,weights_path,fig_directory,run_name)
 
 #    data = generator.next()
 #    #output,states = model.test(sess, input, weights_path = weights_path)
