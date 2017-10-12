@@ -499,6 +499,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('run_name', help="task name", type=str)
     parser.add_argument('fig_directory',help="where to save figures")
+    parser.add_argument('weights_path',help="where to save weights")
     parser.add_argument('-m','--mem_gap', help="supply memory gap length", type=int,default=50)
     parser.add_argument('-v','--var_delay', help="supply variable memory gap delay", type=int,default=0)
     parser.add_argument('-r','--rec_noise', help ="recurrent noise", type=float,default=0.0)
@@ -541,8 +542,8 @@ if __name__ == "__main__":
     training_iters = args.training_iters
     display_step = 200
     
-    weights_path = '../weights/' + run_name + '.npz'
-    #weights_path = None
+    #weights_path = '../weights/' + run_name + '.npz'
+    weights_path = args.weights_path
     
     params = set_params(epochs=200, sample_size= batch_size, input_wait=input_wait, 
                         stim_dur=stim_dur, mem_gap=mem_gap_length, out_gap = out_gap, out_dur=out_dur, 
