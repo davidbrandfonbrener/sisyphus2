@@ -1,10 +1,15 @@
+
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+
 import numpy as np
 import tensorflow as tf
 from backend.networks import Model
 import backend.visualizations as V
 from backend.simulation_tools import Simulator
 from scipy.spatial.distance import pdist, squareform
-import matplotlib.pyplot as plt
+
 
 
 # Builds a dictionary of parameters that specifies the information
