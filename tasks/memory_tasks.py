@@ -247,12 +247,13 @@ def demean(s):
     return s-np.mean(s,axis=0)
     
     
-def analysis_and_write(params,weights_path,fig_directory,run_name):
+def analysis_and_write(params,weights_path,fig_directory,run_name,no_rec_noise=True):
     
     from matplotlib.backends.backend_pdf import PdfPages
     import os
     
-    
+    if no_rec_noise:
+        params['rec_noise'] = 0.0
     
     try:
         os.stat(fig_directory)
