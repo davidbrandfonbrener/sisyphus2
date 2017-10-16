@@ -496,6 +496,55 @@ def analysis_and_write(params,weights_path,fig_directory,run_name,no_rec_noise=T
     
     pp.savefig(fig7)
     
+    #Figure 8 Plot long delayed go cue
+    
+    fig8 = plt.figure()
+    
+    d = .01*np.random.randn(2000,3)
+    d[50:60,0] = 1.
+    # d[100:110,1] = 2.
+    # d[200:210,0] = 2.
+    # d[300:310,1] = 2.
+    d[800:810,2] = 1.
+    d[1300:1310,2] = 1.
+    d[1800:1810,2] = 1.
+    
+    o_long,s_long = sim.run_trial(d,t_connectivity=False)
+    
+    plt.figure(figsize=(5,8))
+    
+    plt.subplot(4,1,1)
+    plt.plot(d)
+    plt.title('Input')
+    
+    plt.subplot(4,1,2)
+    plt.plot(o_long[:,0,:]);
+    plt.title('Output')
+    
+    d = .01*np.random.randn(2000,3)
+    d[50:60,1] = 1.
+    # d[100:110,1] = 2.
+    # d[200:210,0] = 2.
+    # d[300:310,1] = 2.
+    d[800:810,2] = 1.
+    d[1300:1310,2] = 1.
+    d[1800:1810,2] = 1.
+    
+    o_long,s_long = sim.run_trial(d,t_connectivity=False)
+    
+    plt.subplot(4,1,3)
+    plt.plot(d)
+    plt.title('Input')
+    
+    plt.subplot(4,1,4)
+    plt.plot(o_long[:,0,:]);
+    plt.title('Output')
+    
+    plt.tight_layout()
+    
+    pp.savefig(fig8)
+    
+    
     pp.close()
             
 if __name__ == "__main__":
