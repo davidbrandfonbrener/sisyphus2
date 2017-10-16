@@ -3,6 +3,7 @@ import tensorflow as tf
 from backend.networks import Model
 import backend.visualizations as V
 from backend.simulation_tools import Simulator
+from scipy.spatial.distance import pdist, squareform
 import matplotlib.pyplot as plt
 
 
@@ -204,11 +205,12 @@ def long_delay_test(sim):
     
     return o0,s0,o1,s1
     
+    
 def plot_by_max(state,norm=True,thresh=.001):
     fr = np.maximum(state,thresh)
     if norm:
-        #fr = ((fr-np.mean(fr,axis=0))/np.std(fr,axis=0))
-        fr = fr/np.max(fr,axis=0)
+#         fr = ((fr-np.mean(fr,axis=0))/np.std(fr,axis=0))
+        fr = ((fr-np.min(fr,axis=0))/(1e-10+np.max(fr,axis=0)-np.min(fr,axis=0)))
     idx = np.argsort(np.argmax(fr,axis=0))
     plt.pcolormesh(fr[:,idx].T)
     plt.colorbar()
@@ -221,15 +223,284 @@ def plot_dist_to_fixed(state,fp):
     plt.plot(d,'.')
     plt.ylim([0,np.max(d)*1.5])
     return d
-    
 
+def principal_angle(A,B):
+    ''' A = n x p
+        B = n x q'''
+    
+    Qa, ra = np.linalg.qr(A)
+    Qb, rb = np.linalg.qr(B)
+    C = np.linalg.svd(Qa.T.dot(Qb))
+    angles = np.arccos(C[1])
+    
+    return 180*angles/np.pi
+
+def calc_norm(A):
+    return np.sqrt(np.sum(A**2,axis=0))
+    
+def demean(s):
+    return s-np.mean(s,axis=0)
+    
+    
+def analysis_and_write(params,weights_path):
+    
+    from matplotlib.backends.backend_pdf import PdfPages
+    import os
+    
+    try:
+        os.stat('demo_figures')
+    except:
+        os.mkdir('demo_figures')
         
+    pp = PdfPages('demo_figures/demo_analysis_figures.pdf')
+
+    generator = generate_train_trials(params)
+    weights = np.load(weights_path)
+    
+    W = weights['W_rec']
+    brec = weights['b_rec'] 
+    
+    data = generator.next()
+    sim = Simulator(params, weights_path=weights_path)
+    output,states = sim.run_trial(data[0][0,:,:],t_connectivity=False)
+    
+    s = np.zeros([data[0].shape[1],data[0].shape[0],100])
+    for ii in range(data[0].shape[0]):
+        s[:,ii,:] = sim.run_trial(data[0][ii,:,:],t_connectivity=False)[1].reshape([data[0].shape[1],100])
+        
+    #Figure 1 (Single Trial (Input Output State))
+    fig1 = plt.figure(figsize=(5,5))
+    plt.subplot(3,1,1)
+    plt.plot(output[:,0,:])
+    plt.title('Out')
+    plt.subplot(3,1,2)
+    plt.plot(states[:,0,:])
+    plt.title('State')
+    plt.subplot(3,1,3)
+    plt.plot(data[0][0,:,:])
+    plt.title('Input')
+    plt.tight_layout()
+    
+    pp.savefig(fig1)
+    
+    #Figure 2 (Plot structural measures of W against random matrix R)
+    N = W.shape[0]
+
+    R = np.random.randn(N,N)/float(N)
+    R = 1.1*R/np.max(np.abs(np.linalg.eig(R)[0]))
+    
+    #calculate the norm of trained rec matrix W and random gaussian matrix R
+    normW = calc_norm(W)
+    normR = calc_norm(R)
+    min_norm = np.min([np.min(normW),np.min(normR)])
+    max_norm = np.max([np.max(normW),np.max(normR)])
+    xx_norm = np.linspace(min_norm,max_norm,50)
+    histnormW, _ = np.histogram(normW,xx_norm)
+    histnormR, _ = np.histogram(normR,xx_norm)
+    
+    #calculate hists for angles between columns
+    
+    angle_W = np.arccos(np.clip((W.T.dot(W))/np.outer(normW,normW),-1.,1.))
+    angle_R = np.arccos(np.clip((R.T.dot(R))/np.outer(normR,normR),-1.,1.))
+    min_val = np.min([np.min(angle_W),np.min(angle_R)])
+    max_val = np.max([np.max(angle_W),np.max(angle_R)])
+    xx = np.linspace(min_val,max_val,50)
+    histW, bin_edgesW = np.histogram(angle_W[np.tril(np.ones_like(W),-1)>0],xx)
+    histR, bin_edgesR = np.histogram(angle_R[np.tril(np.ones_like(R),-1)>0],xx)
+    
+    fig2 = plt.figure(figsize=(8,5))
+    plt.subplot(2,2,1)
+    plt.pcolormesh(angle_W)
+    plt.colorbar()
+    plt.title('$\measuredangle$ W')
+    
+    plt.subplot(2,2,2)
+    plt.pcolormesh(angle_R)
+    plt.colorbar()
+    plt.title('$\measuredangle$ R')
+    
+    plt.subplot(2,2,3)
+    plt.bar(xx[:-1],histW,width=bin_edgesW[1]-bin_edgesW[0])
+    plt.bar(xx[:-1],-histR,width=bin_edgesR[1]-bin_edgesR[0],color='g')
+    
+    plt.legend(['W','Random'],fontsize=10,loc='lower left')
+    plt.title('Hist of Angles')
+    
+    plt.subplot(2,2,4)
+    plt.bar(xx_norm[:-1],histnormW,width=xx_norm[1]-xx_norm[0])
+    plt.bar(xx_norm[:-1],-histnormR,width=xx_norm[1]-xx_norm[0],color='g')
+    
+    plt.legend(['W','Random'],fontsize=10,loc='lower left')
+    plt.title('Hist of Norms')
+    plt.tight_layout()
+    
+    pp.savefig(fig2)
+    
+    #Figure 3 (Stupid Figure where activity is sorted by time of max firing rate)
+    fig3 = plt.figure(figsize=(7,3))
+    plot_by_max(s[:,0,:])
+    plt.xlabel('Time')
+    plt.ylabel('Neuron')
+    
+    pp.savefig(fig3)
+    
+    #Figure 4 (Principal Angle Analysis)
+    masks = s[:,0,:].T>0
+    max_ev = np.zeros(data[0].shape[1])
+    
+    pos = []
+    neg = []
+    leading = []
+    for ii in range(data[0].shape[1]):
+        evals,evecs = np.linalg.eig(W*masks[:,ii]-np.eye(100))
+        max_ev[ii] = np.max(evals.real)
+        pos.append(evecs[:,evals>0])
+        neg.append(evecs[:,evals<0])
+        leading.append(evecs[:,np.argsort(np.abs(evals.real))[:10]]) #.reshape([100,2]))
+        
+    
+    xx = np.arange(0,data[0].shape[1],1)
+    pa = np.zeros([len(xx),len(xx)])
+    
+    basis = leading
+    
+    for ii,pre in enumerate(xx):
+        for jj,post in enumerate(xx):
+            if basis[pre].shape[1]*basis[post].shape[1]>0:
+                pas = principal_angle(basis[pre],basis[post])
+                pa[ii,jj] = np.nanmean(pas)
+            else:
+                pa[ii,jj] = 0.
+    
+    fig4 = plt.figure()        
+    plt.pcolormesh(pa,vmin=0,vmax=90)
+    plt.colorbar()
+    plt.ylim([0,pa.shape[0]])
+    plt.xlim([0,pa.shape[1]])
+    
+    plt.title('Principal Angle Analysis')
+    plt.xlabel('Time')
+    plt.ylabel('Time')
+    
+    pp.savefig(fig4)
+
+    #Figure 5 Plot long term state activity for in, and in+go conditions
+    
+    d = .01*np.random.randn(2000,3)
+    d[50:60,0] = 1.
+    o_in0,s_in0 = sim.run_trial(d,t_connectivity=False)
+    
+    
+    d[50:60,1] = 1.
+    o_in1,s_in1 = sim.run_trial(d,t_connectivity=False)
+    
+    d = .01*np.random.randn(2000,3)
+    d[50:60,0] = 1.
+    d[150:160,2] = 1.
+    o_go0,s_go0 = sim.run_trial(d,t_connectivity=False)
+    
+    
+    d[50:60,1] = 1.
+    d[150:160,2] = 1.
+    o_go1,s_go1 = sim.run_trial(d,t_connectivity=False)
+    
+    fig5 = plt.figure(figsize=(8,6))
+    
+    plt.subplot(4,2,1)
+    plt.plot(s_in1[:500,0,:]);
+    plt.title('Long Input 1')
+    plt.subplot(4,2,3)
+    plt.plot(s_in0[:500,0,:]);
+    plt.title('Long Input 2')
+    plt.subplot(4,2,5)
+    plt.plot(s_in0[:500,0,:] - s_in1[:500,0,:]);
+    plt.title('Difference')
+    plt.subplot(4,2,7)
+    plt.plot(o_in1[:500,0,:]);
+    plt.plot(o_in0[:500,0,:]);
+    plt.title('Output')
+    
+    
+    plt.subplot(4,2,2)
+    plt.plot(s_go0[:500,0,:]);
+    plt.title('Long Input 1 + Go Cue')
+    plt.subplot(4,2,4)
+    plt.plot(s_go1[:500,0,:]);
+    plt.title('Long Input 2 + Go Cue')
+    plt.subplot(4,2,6)
+    plt.plot(s_go0[:500,0,:] - s_go1[:500,0,:]);
+    plt.title('Difference')
+    plt.subplot(4,2,8)
+    plt.plot(o_go0[:500,0,:]);
+    plt.plot(o_go1[:500,0,:]);
+    plt.title('Output')
+    
+    plt.tight_layout()
+    
+    pp.savefig(fig5)
+    
+    #Figure 6 Plot PC projection
+
+    s_pca = np.concatenate((s_go0[:500,0,:],s_go1[:500,0,:]),axis=0)
+    s_pca = demean(s_pca)
+    c_pca = np.cov(s_pca.T)
+    evals,evecs = np.linalg.eig(c_pca)
+    
+    fig6 = plt.figure()
+    plt.plot(s_go0[:,0,:].dot(evecs[:,0:1]),s_go0[:,0,:].dot(evecs[:,1:2]),'g',alpha=.5)
+    plt.plot(s_go1[:,0,:].dot(evecs[:,0:1]),s_go1[:,0,:].dot(evecs[:,1:2]),'b',alpha=.5)
+    plt.plot(s_in0[:,0,:].dot(evecs[:,0:1]),s_in0[:,0,:].dot(evecs[:,1:2]),'c',alpha=.5)
+    plt.plot(s_in1[:,0,:].dot(evecs[:,0:1]),s_in1[:,0,:].dot(evecs[:,1:2]),'r',alpha=.5)
+    
+    plt.plot(s_go1[:,0,:].dot(evecs[:,0:1])[0],s_go1[:,0,:].dot(evecs[:,1:2])[0],'kx',markersize=10)
+    
+    plt.plot(s_go0[:,0,:].dot(evecs[:,0:1])[49],s_go0[:,0,:].dot(evecs[:,1:2])[49],'og',markersize=5)
+    plt.plot(s_go0[:,0,:].dot(evecs[:,0:1])[149],s_go0[:,0,:].dot(evecs[:,1:2])[149],'og',markersize=5)
+    
+    plt.plot(s_go1[:,0,:].dot(evecs[:,0:1])[49],s_go1[:,0,:].dot(evecs[:,1:2])[49],'xb',markersize=8)
+    plt.plot(s_go1[:,0,:].dot(evecs[:,0:1])[149],s_go1[:,0,:].dot(evecs[:,1:2])[149],'xb',markersize=8)
+    
+    plt.xlabel('pc1')
+    plt.ylabel('pc2')
+    
+    plt.legend(['in_go_0','in_go_1','in_0','in_1'],loc='lower left',fontsize=8)
+    
+    pp.savefig(fig6)
+    
+    #Figure 7 Hamming Distance btw Putative Fixed Points
+    
+    masks = s[:,0,:].T>0
+    x_hat = np.zeros(masks.shape)
+
+    for ii in range(masks.shape[1]):
+        Weff = W*masks[:,ii]
+        x_hat[:,ii] = np.linalg.inv(np.eye(100)-Weff).dot(brec)
+    
+    fig7 = plt.figure()
+    plt.pcolormesh(squareform(pdist(np.sign(x_hat[:,:]).T,metric='hamming'))) #,vmax=.3)
+    plt.colorbar()
+    plt.ylim([0,x_hat.shape[1]])
+    plt.xlim([0,x_hat.shape[1]])
+    
+    plt.title('Hamming Distance Between Putative FPs')
+    plt.ylabel('Time')
+    plt.xlabel('Time')
+    
+    pp.savefig(fig7)
+    
+    pp.close()
+            
 if __name__ == "__main__":
     
     import argparse
     
     parser = argparse.ArgumentParser()
-    parser.add_argument('mem_gap', help="supply memory gap length", type=int)
+    parser.add_argument('task_name', help="task name", type=str)
+    parser.add_argument('-m','--mem_gap', help="supply memory gap length", type=int,default=50)
+    parser.add_argument('-v','--var_delay', help="supply variable memory gap delay", type=int,default=0)
+    parser.add_argument('-r','--rec_noise', help ="recurrent noise", type=float,default=0.0)
+    parser.add_argument('-t','--training_iters', help="training iterations", type=int,default=300000)
+    parser.add_argument('-ts','--task',help="task type",default='memory_saccade')
     args = parser.parse_args()
     
     #task params
@@ -239,12 +510,12 @@ if __name__ == "__main__":
     out_gap = 0
     out_dur = 60
     
-    var_delay_length = 50
+    var_delay_length = args.var_delay
     var_in_wait = 40
     var_out_gap = 0
     second_in_scale = 0.  #Only one input period or two (e.g. mem saccade no distractor vs with distractor)
-    task = 'memory_saccade'
-    name = 'mem_sac_variable'
+    task = args.task
+    name = args.task_name
     
     #model params
     n_in = 2 
@@ -254,14 +525,14 @@ if __name__ == "__main__":
     tau = 100.0 #As double
     dt = 20.0  #As double
     dale_ratio = 0
-    rec_noise = 0.0
+    rec_noise = args.rec_noise
     stim_noise = 0.1
     batch_size = 128
     
     
     #train params
     learning_rate = .0001 
-    training_iters = 5000000
+    training_iters = args.training_iters
     display_step = 200
     
     weights_path = '../weights/' + name + '_' + str(mem_gap_length) + '.npz'
@@ -285,23 +556,25 @@ if __name__ == "__main__":
     
     model.train(sess, generator, learning_rate = learning_rate, 
                 training_iters = training_iters, weights_path = weights_path)
+    
+    analysis_and_write(params,weights_path)
 
-    data = generator.next()
-    #output,states = model.test(sess, input, weights_path = weights_path)
-    
-    
-    W = model.W_rec.eval(session=sess)
-    U = model.W_in.eval(session=sess)
-    Z = model.W_out.eval(session=sess)
-    brec = model.b_rec.eval(session=sess)
-    bout = model.b_out.eval(session=sess)
-    
-    sim = Simulator(params, weights_path=weights_path)
-    output,states = sim.run_trial(data[0][0,:,:],t_connectivity=False)
-    
-    s = np.zeros([states.shape[0],batch_size,n_hidden])
-    for ii in range(batch_size): 
-        s[:,ii,:] = sim.run_trial(data[0][ii,:,:],t_connectivity=False)[1].reshape([states.shape[0],n_hidden])
+#    data = generator.next()
+#    #output,states = model.test(sess, input, weights_path = weights_path)
+#    
+#    
+#    W = model.W_rec.eval(session=sess)
+#    U = model.W_in.eval(session=sess)
+#    Z = model.W_out.eval(session=sess)
+#    brec = model.b_rec.eval(session=sess)
+#    bout = model.b_out.eval(session=sess)
+#    
+#    sim = Simulator(params, weights_path=weights_path)
+#    output,states = sim.run_trial(data[0][0,:,:],t_connectivity=False)
+#    
+#    s = np.zeros([states.shape[0],batch_size,n_hidden])
+#    for ii in range(batch_size): 
+#        s[:,ii,:] = sim.run_trial(data[0][ii,:,:],t_connectivity=False)[1].reshape([states.shape[0],n_hidden])
     
     sess.close()
 
