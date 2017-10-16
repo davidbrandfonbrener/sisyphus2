@@ -17,6 +17,10 @@ class Task(object):
         for key in kwargs:
             setattr(self, key, kwargs[key])
 
+        #set no autapses
+        # THIS IS JENKY!! PUT THIS INTO NETWORKS BACKEND!
+        self.recurrent_connectivity_mask = np.ones((self.N_rec, self.N_rec)) - np.diag(np.ones(self.N_rec))
+
     def build_train_batch(self):
         pass
 
@@ -34,6 +38,7 @@ class rdm(Task):
                             epochs = 100, N_rec = 50, dale_ratio=None,
                             tau=100.0, dt = 10.0, biases = True,
                             task='n_back', rt_version=False)
+
 
     def build_train_batch(self):
 
@@ -57,6 +62,7 @@ class rdm(Task):
         for ii in range(self.N_batch):
             x_train[ii, stim_time, 0] = stims[ii]
             y_train[ii, out_time, 0] = dirs[ii]
+            mask[ii, out_time, 0] = 1
 
         x_train = x_train + self.stim_noise * np.random.randn(self.N_batch, self.N_steps, self.N_in)
         self.input_times = input_times
