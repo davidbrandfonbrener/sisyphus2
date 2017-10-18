@@ -103,11 +103,11 @@ if __name__ == "__main__":
     batch_size = 128
     #var_delay_length = 50
     
-    n_back = 1
+    n_back = 0
     
     #train params
     learning_rate = .0001 
-    training_iters = 300000
+    training_iters = 10000
     display_step = 200
     
     weights_path = '../weights/n_back.npz'
@@ -121,7 +121,9 @@ if __name__ == "__main__":
     sess = tf.Session()
     
     
-    
+    print('first training')
+    model.train(sess, generator, learning_rate = learning_rate, training_iters = training_iters, weights_path = weights_path)
+    print('second training')
     model.train(sess, generator, learning_rate = learning_rate, training_iters = training_iters, weights_path = weights_path)
 
     data = generator.next()

@@ -316,25 +316,36 @@ def analysis_and_write(params,weights_path,fig_directory,run_name,no_rec_noise=T
     histW, bin_edgesW = np.histogram(angle_W[np.tril(np.ones_like(W),-1)>0],xx)
     histR, bin_edgesR = np.histogram(angle_R[np.tril(np.ones_like(R),-1)>0],xx)
     
-    fig2 = plt.figure(figsize=(8,5))
-    plt.subplot(2,2,1)
+    fig2 = plt.figure(figsize=(8,12))
+    
+    plt.subplot(3,2,1)
+    plt.pcolormesh(W)
+    plt.colorbar()
+    plt.title('W')
+    
+    plt.subplot(3,2,2)
+    plt.pcolormesh(R)
+    plt.colorbar()
+    plt.title('R')
+    
+    plt.subplot(3,2,3)
     plt.pcolormesh(angle_W)
     plt.colorbar()
     plt.title('$\measuredangle$ W')
     
-    plt.subplot(2,2,2)
+    plt.subplot(3,2,4)
     plt.pcolormesh(angle_R)
     plt.colorbar()
     plt.title('$\measuredangle$ R')
     
-    plt.subplot(2,2,3)
+    plt.subplot(3,2,5)
     plt.bar(xx[:-1],histW,width=bin_edgesW[1]-bin_edgesW[0])
     plt.bar(xx[:-1],-histR,width=bin_edgesR[1]-bin_edgesR[0],color='g')
     
     plt.legend(['W','Random'],fontsize=10,loc='lower left')
     plt.title('Hist of Angles')
     
-    plt.subplot(2,2,4)
+    plt.subplot(3,2,6)
     plt.bar(xx_norm[:-1],histnormW,width=xx_norm[1]-xx_norm[0])
     plt.bar(xx_norm[:-1],-histnormR,width=xx_norm[1]-xx_norm[0],color='g')
     
@@ -498,7 +509,7 @@ def analysis_and_write(params,weights_path,fig_directory,run_name,no_rec_noise=T
     
     #Figure 8 Plot long delayed go cue
     
-    fig8 = plt.figure()
+    fig8 = plt.figure(figsize=(5,8))
     
     d = .01*np.random.randn(2000,3)
     d[50:60,0] = 1.
@@ -510,8 +521,6 @@ def analysis_and_write(params,weights_path,fig_directory,run_name,no_rec_noise=T
     d[1800:1810,2] = 1.
     
     o_long,s_long = sim.run_trial(d,t_connectivity=False)
-    
-    plt.figure(figsize=(5,8))
     
     plt.subplot(4,1,1)
     plt.plot(d)
