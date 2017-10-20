@@ -246,38 +246,46 @@ def calc_norm(A):
 def demean(s):
     return s-np.mean(s,axis=0)
     
-    
-def analysis_and_write(params,weights_path,fig_directory,run_name,no_rec_noise=True):
-    
-    from matplotlib.backends.backend_pdf import PdfPages
-    import os
-    
-    if no_rec_noise:
-        params['rec_noise'] = 0.0
-    
-    try:
-        os.stat(fig_directory)
-    except:
-        os.mkdir(fig_directory)
-        
-    pp = PdfPages(fig_directory + '/' + run_name + '.pdf')
+def gen_angle(W,U):
+    normW = calc_norm(W)
+    normU = calc_norm(U)
+    return np.arccos(np.clip((W.T.dot(U))/np.outer(normW,normU),-1.,1.))
 
-    generator = generate_train_trials(params)
-    weights = np.load(weights_path)
+
+def plot_input_output_angles(Win,W,Wout):
+
+    fig = plt.figure(figsize=(10,4))
+    plt.subplot(2,3,1)
+    plt.pcolormesh(gen_angle(Win,Win))
+    plt.colorbar()
+    plt.title('angle $W_{in}$ by $W_{in}$')
+    plt.subplot(2,3,2)
+    plt.pcolormesh(gen_angle(Wout.T,Wout.T))
+    plt.colorbar()
+    plt.title('angle $W_{out}$ by $W_{out}$')
+    plt.subplot(2,3,3)
+    plt.pcolormesh(gen_angle(Win,Wout.T))
+    plt.colorbar()
+    plt.title('angle $W_{in}$ by $W_{out}$')
+    plt.subplot(2,3,4)
+    plt.bar(range(3),calc_norm(Win))
+    plt.xticks([])
+    plt.xlim(-.2,3)
+    plt.xlabel('Win')
+    plt.ylabel('Norm')
+    plt.subplot(2,3,5)
+    plt.bar(range(2),calc_norm(Wout.T))
+    plt.xticks([])
+    plt.xlim(-.2,2)
+    plt.xlabel('Wout')
+    plt.ylabel('Norm')
+
+    plt.tight_layout()
     
-    W = weights['W_rec']
-    brec = weights['b_rec'] 
+    return fig
     
-    data = generator.next()
-    sim = Simulator(params, weights_path=weights_path)
-    output,states = sim.run_trial(data[0][0,:,:],t_connectivity=False)
-    
-    s = np.zeros([data[0].shape[1],data[0].shape[0],100])
-    for ii in range(data[0].shape[0]):
-        s[:,ii,:] = sim.run_trial(data[0][ii,:,:],t_connectivity=False)[1].reshape([data[0].shape[1],100])
-        
-    #Figure 1 (Single Trial (Input Output State))
-    fig1 = plt.figure(figsize=(5,5))
+def plot_single_trial(data,states,output):
+    fig = plt.figure(figsize=(5,5))
     plt.subplot(3,1,1)
     plt.plot(output[:,0,:])
     plt.title('Out')
@@ -288,10 +296,9 @@ def analysis_and_write(params,weights_path,fig_directory,run_name,no_rec_noise=T
     plt.plot(data[0][0,:,:])
     plt.title('Input')
     plt.tight_layout()
+    return fig
     
-    pp.savefig(fig1)
-    
-    #Figure 2 (Plot structural measures of W against random matrix R)
+def plot_structure_Wrec(W):
     N = W.shape[0]
 
     R = np.random.randn(N,N)/float(N)
@@ -316,7 +323,7 @@ def analysis_and_write(params,weights_path,fig_directory,run_name,no_rec_noise=T
     histW, bin_edgesW = np.histogram(angle_W[np.tril(np.ones_like(W),-1)>0],xx)
     histR, bin_edgesR = np.histogram(angle_R[np.tril(np.ones_like(R),-1)>0],xx)
     
-    fig2 = plt.figure(figsize=(8,12))
+    fig = plt.figure(figsize=(8,12))
     
     plt.subplot(3,2,1)
     plt.pcolormesh(W)
@@ -353,17 +360,9 @@ def analysis_and_write(params,weights_path,fig_directory,run_name,no_rec_noise=T
     plt.title('Hist of Norms')
     plt.tight_layout()
     
-    pp.savefig(fig2)
+    return fig
     
-    #Figure 3 (Stupid Figure where activity is sorted by time of max firing rate)
-    fig3 = plt.figure(figsize=(7,3))
-    plot_by_max(s[:,0,:])
-    plt.xlabel('Time')
-    plt.ylabel('Neuron')
-    
-    pp.savefig(fig3)
-    
-    #Figure 4 (Principal Angle Analysis)
+def plot_principal_angles(W,s,data):
     masks = s[:,0,:].T>0
     max_ev = np.zeros(data[0].shape[1])
     
@@ -391,7 +390,7 @@ def analysis_and_write(params,weights_path,fig_directory,run_name,no_rec_noise=T
             else:
                 pa[ii,jj] = 0.
     
-    fig4 = plt.figure()        
+    fig = plt.figure()        
     plt.pcolormesh(pa,vmin=0,vmax=90)
     plt.colorbar()
     plt.ylim([0,pa.shape[0]])
@@ -401,10 +400,9 @@ def analysis_and_write(params,weights_path,fig_directory,run_name,no_rec_noise=T
     plt.xlabel('Time')
     plt.ylabel('Time')
     
-    pp.savefig(fig4)
-
-    #Figure 5 Plot long term state activity for in, and in+go conditions
+    return fig
     
+def plot_long_term_state(sim):
     d = .01*np.random.randn(2000,3)
     d[50:60,0] = 1.
     o_in0,s_in0 = sim.run_trial(d,t_connectivity=False)
@@ -423,7 +421,7 @@ def analysis_and_write(params,weights_path,fig_directory,run_name,no_rec_noise=T
     d[150:160,2] = 1.
     o_go1,s_go1 = sim.run_trial(d,t_connectivity=False)
     
-    fig5 = plt.figure(figsize=(8,6))
+    fig = plt.figure(figsize=(8,6))
     
     plt.subplot(4,2,1)
     plt.plot(s_in1[:500,0,:]);
@@ -456,16 +454,33 @@ def analysis_and_write(params,weights_path,fig_directory,run_name,no_rec_noise=T
     
     plt.tight_layout()
     
-    pp.savefig(fig5)
+    return fig
     
-    #Figure 6 Plot PC projection
-
+def plot_state_pcs(sim):
+    d = .01*np.random.randn(2000,3)
+    d[50:60,0] = 1.
+    o_in0,s_in0 = sim.run_trial(d,t_connectivity=False)
+    
+    
+    d[50:60,1] = 1.
+    o_in1,s_in1 = sim.run_trial(d,t_connectivity=False)
+    
+    d = .01*np.random.randn(2000,3)
+    d[50:60,0] = 1.
+    d[150:160,2] = 1.
+    o_go0,s_go0 = sim.run_trial(d,t_connectivity=False)
+    
+    
+    d[50:60,1] = 1.
+    d[150:160,2] = 1.
+    o_go1,s_go1 = sim.run_trial(d,t_connectivity=False)
+    
     s_pca = np.concatenate((s_go0[:500,0,:],s_go1[:500,0,:]),axis=0)
     s_pca = demean(s_pca)
     c_pca = np.cov(s_pca.T)
     evals,evecs = np.linalg.eig(c_pca)
     
-    fig6 = plt.figure()
+    fig = plt.figure()
     plt.plot(s_go0[:,0,:].dot(evecs[:,0:1]),s_go0[:,0,:].dot(evecs[:,1:2]),'g',alpha=.5)
     plt.plot(s_go1[:,0,:].dot(evecs[:,0:1]),s_go1[:,0,:].dot(evecs[:,1:2]),'b',alpha=.5)
     plt.plot(s_in0[:,0,:].dot(evecs[:,0:1]),s_in0[:,0,:].dot(evecs[:,1:2]),'c',alpha=.5)
@@ -484,10 +499,9 @@ def analysis_and_write(params,weights_path,fig_directory,run_name,no_rec_noise=T
     
     plt.legend(['in_go_0','in_go_1','in_0','in_1'],loc='lower left',fontsize=8)
     
-    pp.savefig(fig6)
+    return fig
     
-    #Figure 7 Hamming Distance btw Putative Fixed Points
-    
+def plot_hamming_dist(s,W,brec):
     masks = s[:,0,:].T>0
     x_hat = np.zeros(masks.shape)
 
@@ -495,7 +509,7 @@ def analysis_and_write(params,weights_path,fig_directory,run_name,no_rec_noise=T
         Weff = W*masks[:,ii]
         x_hat[:,ii] = np.linalg.inv(np.eye(100)-Weff).dot(brec)
     
-    fig7 = plt.figure()
+    fig = plt.figure()
     plt.pcolormesh(squareform(pdist(np.sign(x_hat[:,:]).T,metric='hamming'))) #,vmax=.3)
     plt.colorbar()
     plt.ylim([0,x_hat.shape[1]])
@@ -505,11 +519,10 @@ def analysis_and_write(params,weights_path,fig_directory,run_name,no_rec_noise=T
     plt.ylabel('Time')
     plt.xlabel('Time')
     
-    pp.savefig(fig7)
+    return fig
     
-    #Figure 8 Plot long delayed go cue
-    
-    fig8 = plt.figure(figsize=(5,8))
+def plot_long_delayed_go_cue(sim):
+    fig = plt.figure(figsize=(5,8))
     
     d = .01*np.random.randn(2000,3)
     d[50:60,0] = 1.
@@ -551,7 +564,77 @@ def analysis_and_write(params,weights_path,fig_directory,run_name,no_rec_noise=T
     
     plt.tight_layout()
     
+    return fig
+    
+def analysis_and_write(params,weights_path,fig_directory,run_name,no_rec_noise=True):
+    
+    from matplotlib.backends.backend_pdf import PdfPages
+    import os
+    
+    if no_rec_noise:
+        params['rec_noise'] = 0.0
+    
+    try:
+        os.stat(fig_directory)
+    except:
+        os.mkdir(fig_directory)
+        
+    pp = PdfPages(fig_directory + '/' + run_name + '.pdf')
+
+    generator = generate_train_trials(params)
+    weights = np.load(weights_path)
+    
+    W = weights['W_rec']
+    Win = weights['W_in']
+    Wout = weights['W_out']
+    brec = weights['b_rec'] 
+    
+    data = generator.next()
+    sim = Simulator(params, weights_path=weights_path)
+    output,states = sim.run_trial(data[0][0,:,:],t_connectivity=False)
+    
+    s = np.zeros([data[0].shape[1],data[0].shape[0],100])
+    for ii in range(data[0].shape[0]):
+        s[:,ii,:] = sim.run_trial(data[0][ii,:,:],t_connectivity=False)[1].reshape([data[0].shape[1],100])
+        
+    #Figure 1 (Single Trial (Input Output State))
+    fig1 = plot_single_trial(data,states,output)
+    pp.savefig(fig1)
+    
+    #Figure 2 (Plot structural measures of W against random matrix R)
+    fig2 = plot_structure_Wrec(W)
+    pp.savefig(fig2)
+    
+    #Figure 3 (Stupid Figure where activity is sorted by time of max firing rate)
+    fig3 = plt.figure(figsize=(7,3))
+    plot_by_max(s[:,0,:])
+    plt.xlabel('Time')
+    plt.ylabel('Neuron')
+    pp.savefig(fig3)
+    
+    #Figure 4 (Principal Angle Analysis)
+    fig4 = plot_principal_angles(W,s,data)
+    pp.savefig(fig4)
+
+    #Figure 5 Plot long term state activity for in, and in+go conditions
+    fig5 = plot_long_term_state(sim)
+    pp.savefig(fig5)
+    
+    #Figure 6 Plot PC projection
+    fig6 = plot_state_pcs(sim)
+    pp.savefig(fig6)
+    
+    #Figure 7 Hamming Distance btw Putative Fixed Points
+    fig7 = plot_hamming_dist(s,W,brec)
+    pp.savefig(fig7)
+    
+    #Figure 8 Plot long delayed go cue
+    fig8 = plot_long_delayed_go_cue(sim)
     pp.savefig(fig8)
+    
+    #Figure 9 Plot angles between input mapping and output mapping
+    fig9 = plot_input_output_angles(Win,W,Wout)
+    pp.savefig(fig9)
     
     
     pp.close()
