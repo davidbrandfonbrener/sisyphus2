@@ -123,8 +123,8 @@ if __name__ == "__main__":
     
     print('first training')
     model.train(sess, generator, learning_rate = learning_rate, training_iters = training_iters, weights_path = weights_path)
-    print('second training')
-    model.train(sess, generator, learning_rate = learning_rate, training_iters = training_iters, weights_path = weights_path)
+    #print('second training')
+    #model.train(sess, generator, learning_rate = learning_rate, training_iters = training_iters, weights_path = weights_path, initialize_variables=False)
 
     data = generator.next()
     #output,states = model.test(sess, input, weights_path = weights_path)
