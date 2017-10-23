@@ -250,6 +250,19 @@ def gen_angle(W,U):
     normW = calc_norm(W)
     normU = calc_norm(U)
     return np.arccos(np.clip((W.T.dot(U))/np.outer(normW,normU),-1.,1.))
+    
+def plot_params(params):
+    params['input_times'] = []
+    params['output_times'] = []
+    ordered_keys = sorted(params)
+    fig = plt.figure(figsize=(8,11),frameon=False); 
+    for ii in range(len(params)): 
+        item = ordered_keys[ii] + ': ' + str(params[ordered_keys[ii]])
+        plt.text(.1,.9-.9/len(params)*ii,item)
+    ax = plt.gca()
+    ax.axis('off')
+        
+    return fig
 
 
 def plot_input_output_angles(Win,W,Wout,brec):
@@ -292,9 +305,10 @@ def plot_biclustered_weights(W):
     fit_W = W[np.argsort(model.row_labels_)]
     fit_W = fit_W[:, np.argsort(model.column_labels_)]
                   
-    fig = plt.figure(figsize=(6,6))
+    fig = plt.figure(figsize=(6,4))
     plt.pcolormesh(fit_W,cmap='viridis')
     plt.colorbar()
+    plt.axes().set_aspect('equal')
     plt.title('Biclustering of Wrec')
     
     return fig
@@ -411,6 +425,7 @@ def plot_principal_angles(W,s,data):
     plt.ylim([0,pa.shape[0]])
     plt.xlim([0,pa.shape[1]])
     
+    plt.axes().set_aspect('equal')
     plt.title('Principal Angle Analysis')
     plt.xlabel('Time')
     plt.ylabel('Time')
@@ -530,6 +545,7 @@ def plot_hamming_dist(s,W,brec):
     plt.ylim([0,x_hat.shape[1]])
     plt.xlim([0,x_hat.shape[1]])
     
+    plt.axes().set_aspect('equal')
     plt.title('Hamming Distance Between Putative FPs')
     plt.ylabel('Time')
     plt.xlabel('Time')
@@ -581,10 +597,58 @@ def plot_long_delayed_go_cue(sim):
     
     return fig
     
+def plot_biases(weights):
+    brec = weights['b_rec']
+    bout = weights['b_out']
+    win = weights['W_in']
+    wout = weights['W_out']
+    wrec = weights['W_rec']
+
+    fig = plt.figure(figsize=(10,6))
+    plt.subplot(2,3,1)
+    plt.hist(brec)
+    plt.title('brec')
+    plt.tick_params(labelsize=8)
+    
+    plt.subplot(2,3,2)
+    plt.bar([0,1],bout)
+    plt.title('bout')
+    plt.tick_params(labelsize=8)
+    
+    plt.subplot(2,3,4)
+    plt.plot(win[:,0],win[:,1],'.')
+    plt.xlabel('W_in 0')
+    plt.ylabel('W_in 1')
+    plt.tick_params(labelsize=8)
+    
+    plt.subplot(2,3,5)
+    plt.plot(wout[0,:],wout[1,:],'.')
+    plt.xlabel('W_out 0')
+    plt.ylabel('W_out 1')
+    plt.tick_params(labelsize=8)
+    
+    plt.subplot(2,3,3)
+    plt.hist(np.diag(wrec))
+    plt.title('diag(W_rec)')
+    plt.tick_params(labelsize=8)
+    
+    plt.subplot(2,3,6)
+    plt.plot(brec,np.diag(wrec),'.')
+    plt.xlabel('b_rec')
+    plt.ylabel('diag(W_rec)')
+    plt.tick_params(labelsize=8)
+    
+    plt.tight_layout()
+    
+    return fig
+    
 def analysis_and_write(params,weights_path,fig_directory,run_name,no_rec_noise=True):
     
     from matplotlib.backends.backend_pdf import PdfPages
     import os
+    import copy
+    
+    original_params = copy.deepcopy(params)
     
     if no_rec_noise:
         params['rec_noise'] = 0.0
@@ -611,7 +675,11 @@ def analysis_and_write(params,weights_path,fig_directory,run_name,no_rec_noise=T
     s = np.zeros([data[0].shape[1],data[0].shape[0],100])
     for ii in range(data[0].shape[0]):
         s[:,ii,:] = sim.run_trial(data[0][ii,:,:],t_connectivity=False)[1].reshape([data[0].shape[1],100])
-        
+    
+    #Figure 0 (Plot Params)
+    fig0 = plot_params(original_params)
+    pp.savefig(fig0)    
+    
     #Figure 1 (Single Trial (Input Output State))
     fig1 = plot_single_trial(data,states,output)
     pp.savefig(fig1)
@@ -648,8 +716,16 @@ def analysis_and_write(params,weights_path,fig_directory,run_name,no_rec_noise=T
     pp.savefig(fig8)
     
     #Figure 9 Plot angles between input mapping and output mapping
-    fig9 = plot_input_output_angles(Win,W,Wout,brec)
+    fig9 = plot_input_output_angles(Win,W,Wout,brec)    
     pp.savefig(fig9)
+    
+    #Figure 10 Plot biclustered recurrent weights
+    fig10 = plot_biclustered_weights(W)
+    pp.savefig(fig10)
+    
+    #Figure 11 Plot biases
+    fig11 = plot_biases(weights)
+    pp.savefig(fig11)
     
     
     pp.close()
