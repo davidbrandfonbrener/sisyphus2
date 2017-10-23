@@ -252,7 +252,7 @@ def gen_angle(W,U):
     return np.arccos(np.clip((W.T.dot(U))/np.outer(normW,normU),-1.,1.))
 
 
-def plot_input_output_angles(Win,W,Wout):
+def plot_input_output_angles(Win,W,Wout,brec):
 
     fig = plt.figure(figsize=(10,4))
     plt.subplot(2,3,1)
@@ -281,6 +281,21 @@ def plot_input_output_angles(Win,W,Wout):
     plt.ylabel('Norm')
 
     plt.tight_layout()
+    
+    return fig
+    
+def plot_biclustered_weights(W):
+    import sklearn.cluster
+    model = sklearn.cluster.bicluster.SpectralBiclustering(n_clusters=4, method='log', random_state=0)
+    model.fit(W)
+    
+    fit_W = W[np.argsort(model.row_labels_)]
+    fit_W = fit_W[:, np.argsort(model.column_labels_)]
+                  
+    fig = plt.figure(figsize=(6,6))
+    plt.pcolormesh(fit_W,cmap='viridis')
+    plt.colorbar()
+    plt.title('Biclustering of Wrec')
     
     return fig
     
@@ -323,7 +338,7 @@ def plot_structure_Wrec(W):
     histW, bin_edgesW = np.histogram(angle_W[np.tril(np.ones_like(W),-1)>0],xx)
     histR, bin_edgesR = np.histogram(angle_R[np.tril(np.ones_like(R),-1)>0],xx)
     
-    fig = plt.figure(figsize=(8,12))
+    fig = plt.figure(figsize=(8,8))
     
     plt.subplot(3,2,1)
     plt.pcolormesh(W)
@@ -633,7 +648,7 @@ def analysis_and_write(params,weights_path,fig_directory,run_name,no_rec_noise=T
     pp.savefig(fig8)
     
     #Figure 9 Plot angles between input mapping and output mapping
-    fig9 = plot_input_output_angles(Win,W,Wout)
+    fig9 = plot_input_output_angles(Win,W,Wout,brec)
     pp.savefig(fig9)
     
     
