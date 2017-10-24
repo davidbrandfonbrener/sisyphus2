@@ -30,8 +30,8 @@ class Model(object):
         self.dale_ratio = params['dale_ratio']
         self.rec_noise  = params['rec_noise']
 
-        # biases
-        #self.biases = params['biases']
+        # weights path
+        self.weights_path = params.get('weights_path', None)
 
         # Dale matrix
         dale_vec = np.ones(N_rec)
@@ -82,9 +82,35 @@ class Model(object):
 
         # trainable variables
         with tf.variable_scope("model"):
-            
+
+            # ------------------------------------------------
+            # Random initialization Load weights from weights path
+            # for Initial state, Weight matrices, and bias weights
+            # ------------------------------------------------
+            if self.weights_path is None:
+                # random initializations
+                init_state_initializer = tf.random_normal_initializer(mean=0.1, stddev=0.01)
+                W_in_initializer = tf.constant_initializer(
+                                    0.1 * np.random.uniform(-1, 1, size=(self.N_rec, self.N_in)))
+                W_rec_initializer = tf.constant_initializer(self.initial_W())
+                W_out_initializer = tf.constant_initializer(
+                                    0.1 * np.random.uniform(-1, 1, size=(self.N_out, self.N_rec)))
+                b_rec_initializer = tf.constant_initializer(0.0)
+                b_out_initializer = tf.constant_initializer(0.0)
+            else:
+                print("Loading Weights")
+                weights = np.load(self.weights_path)
+                init_state_initializer = tf.constant_initializer(weights['init_state'])
+                W_in_initializer = tf.constant_initializer(weights['W_in'])
+                W_rec_initializer = tf.constant_initializer(weights['W_rec'])
+                W_out_initializer = tf.constant_initializer(weights['W_out'])
+                b_rec_initializer = tf.constant_initializer(weights['b_rec'])
+                b_out_initializer = tf.constant_initializer(weights['b_out'])
+
+
+
             self.init_state = tf.get_variable('init_state', [N_batch, N_rec],
-                                              initializer=tf.random_normal_initializer(mean=0.1, stddev=0.01))
+                                              initializer=init_state_initializer)
 
             # ------------------------------------------------
             # Trainable variables:
@@ -95,8 +121,7 @@ class Model(object):
             # (uniform initialization as in pycog)
             self.W_in = \
                 tf.get_variable('W_in', [N_rec, N_in],
-                                initializer=tf.constant_initializer(
-                                    0.1 * np.random.uniform(-1, 1, size=(self.N_rec, self.N_in))),
+                                initializer=W_in_initializer,
                                 trainable=self.W_in_train)
             # Recurrent weight matrix:
             # (gamma (Dale) or normal (non-Dale) initialization)
@@ -104,21 +129,21 @@ class Model(object):
                 tf.get_variable(
                     'W_rec',
                     [N_rec, N_rec],
-                    initializer=tf.constant_initializer(self.initial_W()),
+                    initializer=W_rec_initializer,
                     trainable=self.W_rec_train)
             # Output weight matrix:
             # (uniform initialization as in pycog)
             self.W_out = tf.get_variable('W_out', [N_out, N_rec],
-                                         initializer=tf.constant_initializer(
-                                             0.1 * np.random.uniform(-1, 1, size=(self.N_out, self.N_rec))),
+                                         initializer=W_out_initializer,
                                          trainable=self.W_out_train)
 
             # Recurrent bias:
-            self.b_rec = tf.get_variable('b_rec', [N_rec], initializer=tf.constant_initializer(0.0),
+            self.b_rec = tf.get_variable('b_rec', [N_rec], initializer=b_rec_initializer,
                                          trainable=self.b_rec_train)
             # Output bias:
-            self.b_out = tf.get_variable('b_out', [N_out], initializer=tf.constant_initializer(0.0),
+            self.b_out = tf.get_variable('b_out', [N_out], initializer=b_out_initializer,
                                          trainable=self.b_out_train)
+
             # ------------------------------------------------
             # Non-trainable variables:
             # Overall connectivity and Dale's law matrices
