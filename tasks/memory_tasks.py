@@ -2,6 +2,7 @@
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+plt.rcParams['image.cmap'] = 'viridis'
 
 import numpy as np
 import tensorflow as tf
@@ -305,11 +306,26 @@ def plot_biclustered_weights(W):
     fit_W = W[np.argsort(model.row_labels_)]
     fit_W = fit_W[:, np.argsort(model.column_labels_)]
                   
-    fig = plt.figure(figsize=(6,4))
+    normW = calc_norm(fit_W)
+    angle_W = np.arccos(np.clip((W.T.dot(W))/np.outer(normW,normW),-1.,1.))
+    
+    min_val = np.min(angle_W)
+    max_val = np.max(angle_W)
+    xx = np.linspace(min_val,max_val,50)
+    histW, bin_edgesW = np.histogram(angle_W[np.tril(np.ones_like(W),-1)>0],xx)
+                  
+    fig = plt.figure(figsize=(10,4))
+    
+    plt.subplot(1,2,1)
     plt.pcolormesh(fit_W,cmap='viridis')
     plt.colorbar()
-    plt.axes().set_aspect('equal')
+    #plt.axes().set_aspect('equal')
     plt.title('Biclustering of Wrec')
+    
+    plt.subplot(1,2,2)
+    plt.pcolormesh(angle_W)
+    plt.colorbar()
+    plt.title('$\measuredangle$ W clustered')
     
     return fig
     
