@@ -19,7 +19,7 @@ class Task(object):
 
         #set no autapses
         # THIS IS JENKY!! PUT THIS INTO NETWORKS BACKEND!
-        self.recurrent_connectivity_mask = np.ones((self.N_rec, self.N_rec)) - np.diag(np.ones(self.N_rec))
+        # self.recurrent_connectivity_mask = np.ones((self.N_rec, self.N_rec)) - np.diag(np.ones(self.N_rec))
 
     def build_train_batch(self):
         pass
@@ -62,7 +62,7 @@ class rdm(Task):
         for ii in range(self.N_batch):
             x_train[ii, stim_time, 0] = stims[ii]
             y_train[ii, out_time, 0] = dirs[ii]
-            mask[ii, out_time, 0] = 1
+            mask[ii, stim_time, :] = 0
 
         x_train = x_train + self.stim_noise * np.random.randn(self.N_batch, self.N_steps, self.N_in)
         self.input_times = input_times
@@ -70,6 +70,49 @@ class rdm(Task):
 
         return x_train, y_train, mask
 
+
+
+class rdm2(Task):
+
+    default_params = dict(N_in = 2, N_out = 2, N_steps = 200,
+                            coherences=[.5], stim_noise = 0.4, rec_noise = 0,
+                            L1_rec = 0, L2_firing_rate = 0, N_batch = 128,
+                            epochs = 100, N_rec = 50, dale_ratio=None,
+                            tau=100.0, dt = 10.0, biases = True)
+
+
+    def build_train_batch(self):
+
+        input_times = np.zeros([self.N_batch, self.N_in], dtype=np.int)
+        output_times = np.zeros([self.N_batch, self.N_out], dtype=np.int)
+
+        x_train = np.zeros([self.N_batch, self.N_steps, self.N_in])
+        y_train = np.zeros([self.N_batch, self.N_steps, self.N_out])
+        mask = np.ones((self.N_batch, self.N_steps, self.N_in))
+
+        onset_time = np.random.randint(self.N_steps / 2)
+        stim_time = range(onset_time, onset_time + self.N_steps / 4)
+        out_time = range(2 + onset_time + self.N_steps / 4 , self.N_steps)
+
+        dirs = np.random.choice([0, 1], replace=True, size=(self.N_batch))
+        cohs = np.random.choice(self.coherences, replace=True, size=(self.N_batch))
+
+        for ii in range(self.N_batch):
+            x_train[ii, stim_time, dirs[ii]] = 1 + cohs[ii]
+            x_train[ii, stim_time, (dirs[ii]+1)%2] = 1
+
+            y_train[ii, out_time, dirs[ii]] = 1
+            y_train[ii, out_time, (dirs[ii]+1)%2] = 0
+
+            mask[ii, stim_time, 0] = 0
+
+
+        x_train = x_train + self.stim_noise * np.random.randn(self.N_batch, self.N_steps, self.N_in)
+
+        self.input_times = input_times
+        self.output_times = output_times
+
+        return x_train, y_train, mask
 
 
 
