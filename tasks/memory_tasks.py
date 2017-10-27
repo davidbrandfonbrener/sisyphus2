@@ -658,6 +658,22 @@ def plot_biases(weights):
     
     return fig
     
+def plot_eig_dist(s,W):
+    '''plot eigenvalues of Weff-I over time'''
+    fig = plt.figure()
+    t = s.shape[0]
+    n = s.shape[1]
+    evals = np.zeros([t,n])
+    for ii in range(t):
+        mask = s[ii,:]>0
+        evals[ii,:] = np.linalg.eig(W*mask - np.eye(W.shape[0]))[0].real
+        plt.plot(ii*np.ones(len(evals[ii,:])),evals[ii,:],'.',c=[.5,0,.5],alpha=.2)
+    plt.plot(np.max(evals.T,axis=0),'k',linewidth=2,alpha=.5)
+    plt.plot(np.min(evals.T,axis=0),'k',linewidth=2,alpha=.5)
+    plt.xlabel('Time')
+    plt.ylabel('Eigenvalues')
+    return fig
+    
 def analysis_and_write(params,weights_path,fig_directory,run_name,no_rec_noise=True):
     
     from matplotlib.backends.backend_pdf import PdfPages
@@ -742,6 +758,10 @@ def analysis_and_write(params,weights_path,fig_directory,run_name,no_rec_noise=T
     #Figure 11 Plot biases
     fig11 = plot_biases(weights)
     pp.savefig(fig11)
+    
+    #Figure 12 Plot Eigenspectrum
+    fig12 = plot_eig_dist(s,W)
+    pp.savefig(fig12)
     
     
     pp.close()
