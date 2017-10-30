@@ -70,7 +70,7 @@ def hahnloser_fixed_point(sim, trial):
     for i, s in enumerate(states):
         # define active weight matrix
         if sim.dale_ratio is None:
-            Wp = sim.W_rec
+            Wp = np.copy(sim.W_rec)
         else:
             Wp = np.matmul(np.absolute(sim.W_rec), sim.dale_rec)
         for index in range(sim.N_rec):
