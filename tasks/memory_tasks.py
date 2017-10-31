@@ -131,8 +131,12 @@ def build_train_trials(params):
 
         y_train[sample,out_period,output_pattern[sample]] = 1
         
+        #Mask output after response epoch
         mask[sample,range(input_wait+var_in[sample]+stim_dur+mem_gap+var_delay[sample]+stim_dur+out_gap+out_dur,seq_dur),:] = 0
-
+        #Mask output during early response epoch
+        mask[sample,range(input_wait+var_in[sample]+stim_dur+mem_gap+var_delay[sample]+ stim_dur + out_gap + var_out[sample],
+                          input_wait+var_in[sample]+stim_dur+mem_gap+var_delay[sample]+ stim_dur + out_gap + var_out[sample]+10),:] = 0
+             
     #note:#TODO im doing a quick fix, only considering 1 ouput neuron
     
     #for sample in np.arange(sample_size):
