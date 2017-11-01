@@ -764,7 +764,7 @@ def analysis_and_write(params,weights_path,fig_directory,run_name,no_rec_noise=T
     pp.savefig(fig11)
     
     #Figure 12 Plot Eigenspectrum
-    fig12 = plot_eig_dist(s,W)
+    fig12 = plot_eig_dist(s[:,0,:],W)
     pp.savefig(fig12)
     
     
