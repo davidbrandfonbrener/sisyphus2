@@ -15,8 +15,8 @@ from scipy.spatial.distance import pdist, squareform
 
 # Builds a dictionary of parameters that specifies the information
 # about an instance of this specific task
-def set_params(n_in = 2, n_out = 2, input_wait = 3, mem_gap = 4, stim_dur = 3, 
-               out_gap = 0, out_dur=5, var_delay_length = 0, var_in_wait=0,
+def set_params(n_in = 2, n_out = 2, input_wait = 30, mem_gap = 40, stim_dur = 10, 
+               out_gap = 0, out_dur=20, var_delay_length = 0, var_in_wait=0,
                var_out_gap = 0, stim_noise = 0, rec_noise = .1, L1_rec = 0, 
                L2_firing_rate = 1, sample_size = 128, epochs = 100,
                N_rec = 50, dale_ratio=0.8, tau=100.0, dt = 10.0, biases = True,
