@@ -7,6 +7,7 @@ plt.rcParams['image.cmap'] = 'viridis'
 import numpy as np
 import tensorflow as tf
 from backend.networks import Model
+from backend.weight_initializer import weight_initializer
 import backend.visualizations as V
 from backend.simulation_tools import Simulator
 from scipy.spatial.distance import pdist, squareform
@@ -20,7 +21,7 @@ def set_params(n_in = 2, n_out = 2, input_wait = 30, mem_gap = 40, stim_dur = 10
                var_out_gap = 0, stim_noise = 0, rec_noise = .1, L1_rec = 0, 
                L2_firing_rate = 1, sample_size = 128, epochs = 100,
                N_rec = 50, dale_ratio=0.8, tau=100.0, dt = 10.0, biases = True,
-               second_in_scale = 1, go_cue= True,task='xor'):
+               second_in_scale = 1, go_cue= True,task='xor',init_type= 'gauss'):
     
     params = dict()
     params['go_cue']           = go_cue
@@ -30,6 +31,7 @@ def set_params(n_in = 2, n_out = 2, input_wait = 30, mem_gap = 40, stim_dur = 10
     params['N_out']            = n_out
     params['N_steps']          = input_wait + var_in_wait + stim_dur + mem_gap + var_delay_length + stim_dur + out_gap + var_out_gap + out_dur
     params['N_batch']          = sample_size
+    params['init_type']        = init_type
     params['input_wait']       = input_wait
     params['mem_gap']          = mem_gap
     params['stim_dur']         = stim_dur
@@ -781,6 +783,7 @@ if __name__ == "__main__":
     parser.add_argument('-m','--mem_gap', help="supply memory gap length", type=int,default=50)
     parser.add_argument('-v','--var_delay', help="supply variable memory gap delay", type=int,default=0)
     parser.add_argument('-r','--rec_noise', help ="recurrent noise", type=float,default=0.0)
+    parser.add_argument('-i','--initialization', help ="initialization of Wrec", type=str,default='gauss')
     parser.add_argument('-t','--training_iters', help="training iterations", type=int,default=300000)
     parser.add_argument('-ts','--task',help="task type",default='memory_saccade')
     args = parser.parse_args()
@@ -788,6 +791,9 @@ if __name__ == "__main__":
     #run params
     run_name = args.run_name
     fig_directory = args.fig_directory
+    
+    #initialization of wrec
+    init_type = args.initialization
     
     #task params
     mem_gap_length = args.mem_gap
@@ -821,7 +827,6 @@ if __name__ == "__main__":
     display_step = 200
     
     #weights_path = '../weights/' + run_name + '.npz'
-    weights_path = args.weights_path
     
     params = set_params(epochs=200, sample_size= batch_size, input_wait=input_wait, 
                         stim_dur=stim_dur, mem_gap=mem_gap_length, out_gap = out_gap, out_dur=out_dur, 
@@ -830,7 +835,15 @@ if __name__ == "__main__":
                         var_in_wait = var_in_wait, var_out_gap = var_out_gap,
                         rec_noise=rec_noise, stim_noise=stim_noise, 
                         dale_ratio=dale_ratio, tau=tau, task=task,
-                        second_in_scale=second_in_scale)
+                        second_in_scale=second_in_scale,init_type=init_type)
+    
+    
+    output_weights_path = args.weights_path
+    
+    'external weight intializer class'
+    w_initializer = weight_initializer(params,output_weights_path[:-4] + '_init')
+    input_weights_path = w_initializer.gen_weight_dict()
+    params['weights_path'] = input_weights_path + '.npz'
     
     generator = generate_train_trials(params)
     #model = Model(n_in, n_hidden, n_out, n_steps, tau, dt, dale_ratio, rec_noise, batch_size)
@@ -840,9 +853,9 @@ if __name__ == "__main__":
     
     
     model.train(sess, generator, learning_rate = learning_rate, 
-                training_iters = training_iters, weights_path = weights_path)
+                training_iters = training_iters, weights_path = output_weights_path)
     
-    analysis_and_write(params,weights_path,fig_directory,run_name)
+    analysis_and_write(params,output_weights_path,fig_directory,run_name)
 
 #    data = generator.next()
 #    #output,states = model.test(sess, input, weights_path = weights_path)
