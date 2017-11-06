@@ -24,6 +24,10 @@ class weight_initializer(object):
             weights_path = self.gaussian_spec_rad()
         elif self.init_type == 'identity':
             weights_path = self.alpha_Identity()
+        elif self.init_type == 'feed_forward':
+            weights_path = self.feed_forward()
+        elif self.init_type == 'strict_feed_forward':
+            weights_path = self.strict_feed_forward()
             
         return weights_path
             
