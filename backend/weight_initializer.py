@@ -31,6 +31,8 @@ class weight_initializer(object):
             weights_path = self.strict_feed_forward()
         elif self.init_type == 'zero':
             weights_path = self.zero_matrix()
+        elif self.init_type == 'block_feed_forward':
+            weights_path = self.block_feedforward()
             
         return weights_path
             
