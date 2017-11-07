@@ -841,7 +841,8 @@ if __name__ == "__main__":
     output_weights_path = args.weights_path
     
     'external weight intializer class'
-    w_initializer = weight_initializer(params,output_weights_path[:-4] + '_init')
+    autapses = True
+    w_initializer = weight_initializer(params,output_weights_path[:-4] + '_init',autapses=autapses)
     input_weights_path = w_initializer.gen_weight_dict()
     params['weights_path'] = input_weights_path + '.npz'
     
