@@ -237,5 +237,55 @@ class weight_initializer(object):
                                 output_Connectivity=output_Connectivity)
         
         return weights_path
+        
+    def block_feedforward(self,spec_rad=1.1):
+        '''Generate random gaussian weights with specified spectral radius'''
+        N_in    = self.N_in
+        N_rec   = self.N_rec
+        N_out   = self.N_out
+        
+        weights_path = self.init_weights_path
+    
+        #Uniform between -.1 and .1
+        W_in = .2*np.random.rand(N_rec,N_in) - .1
+        W_in[N_rec/2:,:] = 0
+
+        W_out = .2*np.random.rand(N_out,N_rec) - .1
+        W_out[:,:N_rec/2] = 0
+        
+        b_rec = np.zeros(N_rec)
+        b_out = np.zeros(N_out)
+        
+        init_state = .1 + .01*np.random.randn(N_rec)
+        
+        W_rec = np.random.randn(N_rec,N_rec)
+        W_rec = spec_rad*W_rec/np.max(np.abs(np.linalg.eig(W_rec)[0]))
+        W_rec[:N_rec/2,N_rec/2:] = 0
+            
+        input_Connectivity = np.ones([N_rec,N_in])
+        input_Connectivity[N_rec/2:,:] = 0
+        
+        rec_Connectivity = np.ones([N_rec,N_rec])
+        rec_Connectivity[:N_rec/2,N_rec/2:] = 0
+
+        output_Connectivity = np.ones([N_out,N_rec])
+        output_Connectivity[:,N_rec/2:] = 0
+        
+                
+        if not self.autapses:
+            W_rec[np.eye(N_rec)==1] = 0
+            rec_Connectivity[np.eye(N_rec)==1] = 0
+        
+        np.savez(weights_path, W_in = W_in,
+                                W_rec = W_rec,
+                                W_out = W_out,
+                                b_rec = b_rec,
+                                b_out = b_out,
+                                init_state = init_state,
+                                input_Connectivity = input_Connectivity,
+                                rec_Connectivity= rec_Connectivity,
+                                output_Connectivity=output_Connectivity)
+        
+        return weights_path
 
     
