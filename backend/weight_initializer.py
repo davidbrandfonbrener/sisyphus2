@@ -11,10 +11,11 @@ import numpy as np
 
 class weight_initializer(object):
     
-    def __init__(self,params,init_weights_path):
+    def __init__(self,params,init_weights_path,autapses=True):
         self.N_in       = params['N_in']
         self.N_rec      = params['N_rec']
         self.N_out      = params['N_out']
+        self.autapses   = autapses
         self.init_weights_path = init_weights_path
         self.init_type = params['init_type']
 
@@ -28,6 +29,8 @@ class weight_initializer(object):
             weights_path = self.feed_forward()
         elif self.init_type == 'strict_feed_forward':
             weights_path = self.strict_feed_forward()
+        elif self.init_type == 'zero':
+            weights_path = self.zero_matrix()
             
         return weights_path
             
@@ -50,11 +53,16 @@ class weight_initializer(object):
         init_state = .1 + .01*np.random.randn(N_rec)
         
         W_rec = np.random.randn(N_rec,N_rec)
-        W_rec = 2.*W_rec/np.max(np.abs(np.linalg.eig(W_rec)[0]))
-        
+        W_rec = spec_rad*W_rec/np.max(np.abs(np.linalg.eig(W_rec)[0]))
+            
         input_Connectivity = np.ones([N_rec,N_in])
         rec_Connectivity = np.ones([N_rec,N_rec])
         output_Connectivity = np.ones([N_out,N_rec])
+        
+                
+        if not self.autapses:
+            W_rec[np.eye(N_rec)==1] = 0
+            rec_Connectivity[np.eye(N_rec)==1] = 0
         
         np.savez(weights_path, W_in = W_in,
                                 W_rec = W_rec,
@@ -92,6 +100,10 @@ class weight_initializer(object):
         rec_Connectivity = np.ones([N_rec,N_rec])
         output_Connectivity = np.ones([N_out,N_rec])
         
+        if not self.autapses:
+            W_rec[np.eye(N_rec)==1] = 0
+            rec_Connectivity[np.eye(N_rec)==1] = 0
+        
         np.savez(weights_path, W_in = W_in,
                                 W_rec = W_rec,
                                 W_out = W_out,
@@ -127,6 +139,10 @@ class weight_initializer(object):
         input_Connectivity = np.ones([N_rec,N_in])
         rec_Connectivity = np.ones([N_rec,N_rec])
         output_Connectivity = np.ones([N_out,N_rec])
+        
+        if not self.autapses:
+            W_rec[np.eye(N_rec)==1] = 0
+            rec_Connectivity[np.eye(N_rec)==1] = 0
         
         np.savez(weights_path, W_in = W_in,
                                 W_rec = W_rec,
@@ -165,6 +181,50 @@ class weight_initializer(object):
         input_Connectivity = np.ones([N_rec,N_in])
         rec_Connectivity = np.ones([N_rec,N_rec])
         output_Connectivity = np.ones([N_out,N_rec])
+        
+        if not self.autapses:
+            W_rec[np.eye(N_rec)==1] = 0
+            rec_Connectivity[np.eye(N_rec)==1] = 0
+        
+        np.savez(weights_path, W_in = W_in,
+                                W_rec = W_rec,
+                                W_out = W_out,
+                                b_rec = b_rec,
+                                b_out = b_out,
+                                init_state = init_state,
+                                input_Connectivity = input_Connectivity,
+                                rec_Connectivity= rec_Connectivity,
+                                output_Connectivity=output_Connectivity)
+        
+        return weights_path
+        
+    def zero_matrix(self):
+        '''Generate wrec of all zeros'''
+        N_in    = self.N_in
+        N_rec   = self.N_rec
+        N_out   = self.N_out
+        
+        weights_path = self.init_weights_path
+    
+        #Uniform between -.1 and .1
+        W_in = .2*np.random.rand(N_rec,N_in) - .1
+        W_out = .2*np.random.rand(N_out,N_rec) - .1
+        
+        b_rec = np.zeros(N_rec)
+        b_out = np.zeros(N_out)
+        
+        init_state = .1 + .01*np.random.randn(N_rec)
+        
+        W_rec = np.zeros([N_rec,N_rec])
+            
+        input_Connectivity = np.ones([N_rec,N_in])
+        rec_Connectivity = np.ones([N_rec,N_rec])
+        output_Connectivity = np.ones([N_out,N_rec])
+        
+                
+        if not self.autapses:
+            W_rec[np.eye(N_rec)==1] = 0
+            rec_Connectivity[np.eye(N_rec)==1] = 0
         
         np.savez(weights_path, W_in = W_in,
                                 W_rec = W_rec,
