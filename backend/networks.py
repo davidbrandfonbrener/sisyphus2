@@ -106,6 +106,10 @@ class Model(object):
                 W_out_initializer = tf.constant_initializer(weights['W_out'])
                 b_rec_initializer = tf.constant_initializer(weights['b_rec'])
                 b_out_initializer = tf.constant_initializer(weights['b_out'])
+                
+                self.input_connectivity_mask = weights['input_Connectivity']
+                self.recurrent_connectivity_mask = weights['rec_Connectivity']
+                self.output_connectivity_mask = weights['output_Connectivity']
 
 
 
