@@ -271,7 +271,7 @@ class weight_initializer(object):
         rec_Connectivity[:N_rec/2,N_rec/2:] = 0
 
         output_Connectivity = np.ones([N_out,N_rec])
-        output_Connectivity[:,N_rec/2:] = 0
+        output_Connectivity[:,:N_rec/2] = 0
         
                 
         if not self.autapses:

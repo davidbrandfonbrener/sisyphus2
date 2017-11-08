@@ -8,7 +8,7 @@ import numpy as np
 import tensorflow as tf
 from backend.networks import Model
 from backend.weight_initializer import weight_initializer
-import backend.visualizations as V
+#import backend.visualizations as V
 from backend.simulation_tools import Simulator
 from scipy.spatial.distance import pdist, squareform
 

@@ -5,13 +5,14 @@ import tensorflow as tf
 from backend.networks import Model
 #import backend.visualizations as V
 from backend.simulation_tools import Simulator
+from backend.weight_initializer import weight_initializer
 #import matplotlib.pyplot as plt
 
 
 # Builds a dictionary of parameters that specifies the information
 # about an instance of this specific task
 def set_params(n_in = 1, n_out = 1, n_back = 0, n_steps = 200, stim_noise = 0, rec_noise = 0, L1_rec = 0, L2_firing_rate = 0,
-                    sample_size = 128, epochs = 100, N_rec = 50, dale_ratio=0.8, tau=100.0, dt = 10.0, biases = False, task='n_back'):
+                    sample_size = 128, epochs = 100, N_rec = 50, dale_ratio=0.8, tau=100.0, dt = 10.0, biases = False, task='n_back',init_type='gauss'):
     params = dict()
     params['N_in']             = n_in
     params['N_out']            = n_out
@@ -31,6 +32,7 @@ def set_params(n_in = 1, n_out = 1, n_back = 0, n_steps = 200, stim_noise = 0, r
     params['L2_firing_rate']   = L2_firing_rate
     params['N_back']           = n_back
     params['biases']           = biases
+    params['init_type']        = init_type
 
     return params
 
@@ -104,17 +106,25 @@ if __name__ == "__main__":
     #var_delay_length = 50
     
     n_back = 0
+    init_type = 'block_feed_forward'
     
     #train params
     learning_rate = .0001 
-    training_iters = 10000
+    training_iters = 200000
     display_step = 200
     
-    weights_path = '../weights/n_back.npz'
+    weights_path = '../weights/bff_n_back.npz'
     #weights_path = None
     
     params = set_params(n_in = n_in, n_out = n_out, n_back = n_back, n_steps = 200, stim_noise = stim_noise, rec_noise = rec_noise, L1_rec = 0, L2_firing_rate = 0,
-                    sample_size = 128, epochs = 100, N_rec = 50, dale_ratio=dale_ratio, tau=tau, dt = dt, task='n_back')
+                    sample_size = 128, epochs = 100, N_rec = 50, dale_ratio=dale_ratio, tau=tau, dt = dt, task='n_back',init_type=init_type)
+    
+    'external weight intializer class'
+    autapses = True
+    w_initializer = weight_initializer(params,weights_path[:-4] + '_init',autapses=autapses)
+    input_weights_path = w_initializer.gen_weight_dict()
+    params['weights_path'] = input_weights_path + '.npz'
+    
     generator = generate_train_trials(params)
     #model = Model(n_in, n_hidden, n_out, n_steps, tau, dt, dale_ratio, rec_noise, batch_size)
     model = Model(params)
