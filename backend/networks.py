@@ -438,7 +438,8 @@ class Model(object):
     # train the model using Adam
     def train(self, sess, generator,
               learning_rate=.001, training_iters=50000,
-              batch_size=64, display_step=10, weights_path= None):
+              batch_size=64, display_step=10, weights_path= None,
+              generator_function= None, training_weights_path = None):
 
 
         # train with gradient clipping
@@ -471,12 +472,30 @@ class Model(object):
                                 feed_dict={self.x: batch_x, self.y: batch_y, self.output_mask: output_mask})
                 print("Iter " + str(step * batch_size) + ", Minibatch Loss= " + \
                       "{:.6f}".format(loss))
+
+                # allow for curriculum learning
+                if generator_function is not None:
+                    generator = generator_function(loss, step)
+
+
+                # allow for saving weights during training
+                if training_weights_path is not None:
+                    np.savez(training_weights_path  + str(step), W_in=self.W_in.eval(session=sess),
+                             W_rec=self.W_rec.eval(session=sess),
+                             W_out=self.W_out.eval(session=sess),
+                             b_rec=self.b_rec.eval(session=sess),
+                             b_out=self.b_out.eval(session=sess),
+                             init_state=self.init_state.eval(session=sess),
+                             input_Connectivity=self.input_Connectivity.eval(session=sess),
+                             rec_Connectivity=self.rec_Connectivity.eval(session=sess),
+                             output_Connectivity=self.output_Connectivity.eval(session=sess))
+
             step += 1
         t2 = time()
         print("Optimization Finished!")
 
         # save weights
-        if weights_path:
+        if weights_path is not None:
             np.savez(weights_path, W_in = self.W_in.eval(session=sess),
                                     W_rec = self.W_rec.eval(session=sess),
                                     W_out = self.W_out.eval(session=sess),
