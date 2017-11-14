@@ -30,8 +30,8 @@ class Model(object):
         self.dale_ratio = params['dale_ratio']
         self.rec_noise  = params['rec_noise']
 
-        # weights path
-        self.weights_path = params.get('weights_path', None)
+        # load weights path
+        self.load_weights_path = params.get('load_weights_path', None)
 
         # Dale matrix
         dale_vec = np.ones(N_rec)
@@ -87,7 +87,7 @@ class Model(object):
             # Random initialization Load weights from weights path
             # for Initial state, Weight matrices, and bias weights
             # ------------------------------------------------
-            if self.weights_path is None:
+            if self.load_weights_path is None:
                 # random initializations
                 init_state_initializer = tf.random_normal_initializer(mean=0.1, stddev=0.01)
                 W_in_initializer = tf.constant_initializer(
@@ -99,7 +99,7 @@ class Model(object):
                 b_out_initializer = tf.constant_initializer(0.0)
             else:
                 print("Loading Weights")
-                weights = np.load(self.weights_path)
+                weights = np.load(self.load_weights_path)
                 init_state_initializer = tf.constant_initializer(weights['init_state'])
                 W_in_initializer = tf.constant_initializer(weights['W_in'])
                 W_rec_initializer = tf.constant_initializer(weights['W_rec'])
@@ -438,7 +438,7 @@ class Model(object):
     # train the model using Adam
     def train(self, sess, generator,
               learning_rate=.001, training_iters=50000,
-              batch_size=64, display_step=10, weights_path= None,
+              batch_size=64, display_step=10, save_weights_path= None,
               generator_function= None, training_weights_path = None):
 
 
@@ -495,8 +495,8 @@ class Model(object):
         print("Optimization Finished!")
 
         # save weights
-        if weights_path is not None:
-            np.savez(weights_path, W_in = self.W_in.eval(session=sess),
+        if save_weights_path is not None:
+            np.savez(save_weights_path, W_in = self.W_in.eval(session=sess),
                                     W_rec = self.W_rec.eval(session=sess),
                                     W_out = self.W_out.eval(session=sess),
                                     b_rec = self.b_rec.eval(session=sess),
@@ -505,7 +505,7 @@ class Model(object):
                                     input_Connectivity = self.input_Connectivity.eval(session=sess),
                                     rec_Connectivity=self.rec_Connectivity.eval(session=sess),
                                     output_Connectivity=self.output_Connectivity.eval(session=sess))
-            print("Model saved in file: %s" % weights_path)
+            print("Model saved in file: %s" % save_weights_path)
 
         return (t2 - t1)
 
