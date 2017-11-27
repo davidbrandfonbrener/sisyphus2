@@ -104,7 +104,7 @@ class rdm2(Task):
             y_train[ii, out_time, dirs[ii]] = 1
             y_train[ii, out_time, (dirs[ii]+1)%2] = 0
 
-            mask[ii, stim_time, 0] = 0
+            mask[ii, stim_time + range(stim_time[-1], stim_time[-1] + 15), 0] = 0
 
 
         x_train = x_train + self.stim_noise * np.random.randn(self.N_batch, self.N_steps, self.N_in)
