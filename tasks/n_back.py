@@ -105,12 +105,12 @@ if __name__ == "__main__":
     batch_size = 128
     #var_delay_length = 50
     
-    n_back = 0
+    n_back = 1
     init_type = 'block_feed_forward'
     
     #train params
     learning_rate = .0001 
-    training_iters = 200000
+    training_iters = 500000
     display_step = 200
     
     weights_path = '../weights/bff_n_back.npz'
@@ -148,5 +148,9 @@ if __name__ == "__main__":
     
     sim = Simulator(params, weights_path=weights_path)
     output,states = sim.run_trial(data[0][0,:,:],t_connectivity=False)
+    
+    s = np.zeros([data[0].shape[1],data[0].shape[0],50])
+    for ii in range(data[0].shape[0]):
+        s[:,ii,:] = sim.run_trial(data[0][ii,:,:],t_connectivity=False)[1].reshape([data[0].shape[1],50])
     
     sess.close()
