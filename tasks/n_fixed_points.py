@@ -1,11 +1,15 @@
 
 
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+plt.rcParams['image.cmap'] = 'viridis'
+
 import numpy as np
 import tensorflow as tf
 from backend.networks import Model
 #import backend.visualizations as V
 from backend.simulation_tools import Simulator
-import matplotlib.pyplot as plt
 
 
 # Builds a dictionary of parameters that specifies the information
@@ -234,7 +238,7 @@ if __name__ == "__main__":
     save_weights_path = args.weights_path
     
     params = set_params(n_in = n_in, n_out = n_out, n_steps = 300, stim_noise = stim_noise, rec_noise = rec_noise, L1_rec = 0, L2_firing_rate = 0,
-                    sample_size = 128, epochs = 100, N_rec = n_rec, dale_ratio=dale_ratio, tau=tau, dt = dt, task='n_back')
+                    sample_size = 128, epochs = 100, N_rec = n_rec, dale_ratio=dale_ratio, tau=tau, dt = dt, task='n_fixed')
     generator = generate_train_trials(params)
     #model = Model(n_in, n_hidden, n_out, n_steps, tau, dt, dale_ratio, rec_noise, batch_size)
     model = Model(params)
