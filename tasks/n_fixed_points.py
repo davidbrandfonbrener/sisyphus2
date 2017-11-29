@@ -178,7 +178,7 @@ def analysis_and_write(params,weights_path,fig_directory,run_name,no_rec_noise=T
     pp.savefig(fig1)
     
     #Figure 2 (Plot structural measures of W against random matrix R)
-    fig2 = plot_outputs_by_input(s,data,Wout,n=5)
+    fig2 = plot_outputs_by_input(s,data,Wout,n=Win.shape[1])
     pp.savefig(fig2)
     
     
