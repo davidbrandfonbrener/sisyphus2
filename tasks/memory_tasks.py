@@ -844,7 +844,7 @@ if __name__ == "__main__":
     autapses = True
     w_initializer = weight_initializer(params,output_weights_path[:-4] + '_init',autapses=autapses)
     input_weights_path = w_initializer.gen_weight_dict()
-    params['weights_path'] = input_weights_path + '.npz'
+    params['load_weights_path'] = input_weights_path + '.npz'
     
     generator = generate_train_trials(params)
     #model = Model(n_in, n_hidden, n_out, n_steps, tau, dt, dale_ratio, rec_noise, batch_size)
@@ -854,7 +854,7 @@ if __name__ == "__main__":
     
     
     model.train(sess, generator, learning_rate = learning_rate, 
-                training_iters = training_iters, weights_path = output_weights_path)
+                training_iters = training_iters, save_weights_path = output_weights_path)
     
     analysis_and_write(params,output_weights_path,fig_directory,run_name)
 

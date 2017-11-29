@@ -165,9 +165,9 @@ def analysis_and_write(params,weights_path,fig_directory,run_name,no_rec_noise=T
     sim = Simulator(params, weights_path=weights_path)
     output,states = sim.run_trial(data[0][0,:,:],t_connectivity=False)
     
-    s = np.zeros([data[0].shape[1],data[0].shape[0],100])
+    s = np.zeros([data[0].shape[1],data[0].shape[0],W.shape[0]])
     for ii in range(data[0].shape[0]):
-        s[:,ii,:] = sim.run_trial(data[0][ii,:,:],t_connectivity=False)[1].reshape([data[0].shape[1],100])
+        s[:,ii,:] = sim.run_trial(data[0][ii,:,:],t_connectivity=False)[1].reshape([data[0].shape[1],W.shape[0]])
     
     #Figure 0 (Plot Params)
     fig0 = plot_params(original_params)
@@ -201,7 +201,7 @@ if __name__ == "__main__":
     parser.add_argument('-i','--initialization', help ="initialization of Wrec", type=str,default='gauss')
     parser.add_argument('-r','--rec_noise', help ="recurrent noise", type=float,default=0.01)
     parser.add_argument('-t','--training_iters', help="training iterations", type=int,default=300000)
-    parser.add_argument('-ts','--task',help="task type",default='memory_saccade')
+    parser.add_argument('-ts','--task',help="task type",default='fixed_point')
     args = parser.parse_args()
     
     #run params
