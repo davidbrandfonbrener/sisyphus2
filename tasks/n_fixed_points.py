@@ -165,9 +165,9 @@ def analysis_and_write(params,weights_path,fig_directory,run_name,no_rec_noise=T
     sim = Simulator(params, weights_path=weights_path)
     output,states = sim.run_trial(data[0][0,:,:],t_connectivity=False)
     
-    s = np.zeros([data[0].shape[1],data[0].shape[0],100])
+    s = np.zeros([data[0].shape[1],data[0].shape[0],W.shape[0]])
     for ii in range(data[0].shape[0]):
-        s[:,ii,:] = sim.run_trial(data[0][ii,:,:],t_connectivity=False)[1].reshape([data[0].shape[1],100])
+        s[:,ii,:] = sim.run_trial(data[0][ii,:,:],t_connectivity=False)[1].reshape([data[0].shape[1],W.shape[0]])
     
     #Figure 0 (Plot Params)
     fig0 = plot_params(original_params)
@@ -178,7 +178,7 @@ def analysis_and_write(params,weights_path,fig_directory,run_name,no_rec_noise=T
     pp.savefig(fig1)
     
     #Figure 2 (Plot structural measures of W against random matrix R)
-    fig2 = plot_outputs_by_input(s,data,Wout,n=5)
+    fig2 = plot_outputs_by_input(s,data,Wout,n=Win.shape[1])
     pp.savefig(fig2)
     
     
@@ -196,11 +196,12 @@ if __name__ == "__main__":
     parser.add_argument('run_name', help="task name", type=str)
     parser.add_argument('fig_directory',help="where to save figures")
     parser.add_argument('weights_path',help="where to save weights")
-    parser.add_argument('n_fps', help="number of fixed points", type=int,default=5)
-    parser.add_argument('n_rec', help="number of hidden units", type=int,default=10)
+    parser.add_argument('-fp', '--n_fps', help="number of fixed points", type=int,default=5)
+    parser.add_argument('-nr','--n_rec', help="number of hidden units", type=int,default=10)
+    parser.add_argument('-i','--initialization', help ="initialization of Wrec", type=str,default='gauss')
     parser.add_argument('-r','--rec_noise', help ="recurrent noise", type=float,default=0.01)
     parser.add_argument('-t','--training_iters', help="training iterations", type=int,default=300000)
-    parser.add_argument('-ts','--task',help="task type",default='memory_saccade')
+    parser.add_argument('-ts','--task',help="task type",default='fixed_point')
     args = parser.parse_args()
     
     #run params
@@ -230,7 +231,7 @@ if __name__ == "__main__":
     display_step = 200
     
     #weights_path = '../weights/n_fps6by8_1.npz'
-    output_weights_path = args.weights_path
+    save_weights_path = args.weights_path
     
     params = set_params(n_in = n_in, n_out = n_out, n_steps = 300, stim_noise = stim_noise, rec_noise = rec_noise, L1_rec = 0, L2_firing_rate = 0,
                     sample_size = 128, epochs = 100, N_rec = n_rec, dale_ratio=dale_ratio, tau=tau, dt = dt, task='n_back')
@@ -240,11 +241,11 @@ if __name__ == "__main__":
     sess = tf.Session()
     
     
-    model.train(sess, generator, learning_rate = learning_rate, training_iters = training_iters, weights_path = output_weights_path)
+    model.train(sess, generator, learning_rate = learning_rate, training_iters = training_iters, save_weights_path = save_weights_path)
     #print('second training')
     #model.train(sess, generator, learning_rate = learning_rate, training_iters = training_iters, weights_path = weights_path, initialize_variables=False)
 
-    analysis_and_write(params,output_weights_path,fig_directory,run_name)
+    analysis_and_write(params,save_weights_path,fig_directory,run_name)
     
 #    data = generator.next()
 #    inp = np.argmax(data[0][:,40,:],axis=1)
