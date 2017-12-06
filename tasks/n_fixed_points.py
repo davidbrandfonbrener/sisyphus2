@@ -109,6 +109,20 @@ def plot_params(params):
         
     return fig
     
+def plot_single_trial(data,states,output):
+    fig = plt.figure(figsize=(5,5))
+    plt.subplot(3,1,1)
+    plt.plot(output[:,0,:])
+    plt.title('Out')
+    plt.subplot(3,1,2)
+    plt.plot(states[:,0,:])
+    plt.title('State')
+    plt.subplot(3,1,3)
+    plt.plot(data[0][0,:,:])
+    plt.title('Input')
+    plt.tight_layout()
+    return fig
+    
         
 def plot_fps_vs_activity(s,W,brec):
     
@@ -126,6 +140,9 @@ def plot_fps_vs_activity(s,W,brec):
             plt.plot(fp,'r--')
         plt.axhline(0,c='k')
         
+    plt.xlabel('Neuron')
+    plt.title('Activity (fps) at end of Trial')
+        
     return fig
     
 def plot_outputs_by_input(s,data,Z,n=5):
@@ -137,6 +154,7 @@ def plot_outputs_by_input(s,data,Z,n=5):
         out = np.maximum(s[-1,data[0][:,40,ii]>.2,:],0).dot(Z.T).T
         plt.plot(out,c=colors[np.mod(ii,5)],alpha=.4)
 
+    plt.title('Output as a function of Input')
     return fig
     
 def analysis_and_write(params,weights_path,fig_directory,run_name,no_rec_noise=True):
@@ -175,13 +193,17 @@ def analysis_and_write(params,weights_path,fig_directory,run_name,no_rec_noise=T
     
     #Figure 0 (Plot Params)
     fig0 = plot_params(original_params)
-    pp.savefig(fig0)    
-    
+    pp.savefig(fig0)
+
     #Figure 1 (Single Trial (Input Output State))
+    fig1 = plot_single_trial(data,states,output)
+    pp.savefig(fig1)    
+    
+    #Figure 1 (plot fixed points - activity at end of trial)
     fig1 = plot_fps_vs_activity(s,W,brec)
     pp.savefig(fig1)
     
-    #Figure 2 (Plot structural measures of W against random matrix R)
+    #Figure 2 (Plot output activity)
     fig2 = plot_outputs_by_input(s,data,Wout,n=Win.shape[1])
     pp.savefig(fig2)
     
