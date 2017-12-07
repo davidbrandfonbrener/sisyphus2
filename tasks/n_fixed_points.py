@@ -162,7 +162,7 @@ def plot_fps_vs_activity(s,W,brec):
 def plot_outputs_by_input(s,data,Z,n=5):
     
     fig = plt.figure()
-    colors = ['r','g','b','k','c']
+    colors = ['r','g','b','k','c']*4
     
     for ii in range(n): 
         out = np.maximum(s[-1,data[0][:,40,ii]>.2,:],0).dot(Z.T).T
@@ -171,12 +171,13 @@ def plot_outputs_by_input(s,data,Z,n=5):
     plt.title('Output as a function of Input')
     return fig
 
-def pca_plot(n_in,s_long,s,n_reps=8):
+def pca_plot(n_in,s_long,s,inp,brec,n_reps=8):
 
     s_pca = demean(s_long[300,:,:])
     c_pca = np.cov(s_pca.T)
     evals,evecs = np.linalg.eig(c_pca)
 
+    colors = ['r','g','b','k','c']*4
     fig = plt.figure()
     for ii in range(n_in):
         for jj in range(n_reps):
@@ -335,7 +336,11 @@ def analysis_and_write(params,weights_path,fig_directory,run_name,no_rec_noise=T
     Wout = weights['W_out']
     brec = weights['b_rec'] 
     
+    #Generate Input Data
     data = generator.next()
+    #Find Input/Target One-Hot
+    inp = np.argmax(data[0][:,40,:],axis=1)
+    
     sim = Simulator(params, weights_path=weights_path)
     output,states = sim.run_trial(data[0][0,:,:],t_connectivity=False)
     
@@ -373,7 +378,7 @@ def analysis_and_write(params,weights_path,fig_directory,run_name,no_rec_noise=T
     pp.savefig(fig3)
     
     #Figure 4 (Plot 2D PCA projection)
-    fig4 = pca_plot(n_in,s_long,s)
+    fig4 = pca_plot(n_in,s_long,s,inp,brec)
     pp.savefig(fig4)
     
     #Figure5 (Plot Long Output)
