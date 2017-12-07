@@ -187,15 +187,16 @@ def pca_plot(n_in,s_long,s,inp,brec,n_reps=8):
     
     return fig
 
-def plot_long_output_by_input(n_in,s_long):
+def plot_long_output_by_input(n_in,n_rec,s_long,weights):
 
+    colors = ['r','g','b','k','c']*4
     fig = plt.figure(figsize=(8,1.5))
     for ii in range(n_in):
         plt.subplot(1,n_in,ii+1)
         response = relu(s_long[300,ii,:]).dot(weights['W_out'].T) + weights['b_out']
-        max_real = np.max(np.linalg.eig(W*(s_long[300,ii,:]>0)-np.eye(n_rec))[0].real)
+        max_real = np.max(np.linalg.eig(weights['W_rec']*(s_long[300,ii,:]>0)-np.eye(n_rec))[0].real)
         stable = max_real<0
-        print max_real
+        #print max_real
         if stable:
             plt.plot(response,c=colors[np.argmax(response)])
         else:
@@ -205,11 +206,14 @@ def plot_long_output_by_input(n_in,s_long):
         
     return fig
 
-def ablation_analysis(n_rec,n_in,sim):
+def ablation_analysis(n_rec,n_in,weights,sim):
 
     abl_trial_steps = 1000
+    W = weights['W_rec']
     t_cons = []
 
+    colors = ['r','g','b','k','c']*4
+    
     abl_in = np.zeros([abl_trial_steps,n_in*n_rec,n_in])
     for jj in range(n_rec):
         for ii in range(n_in):
@@ -382,11 +386,11 @@ def analysis_and_write(params,weights_path,fig_directory,run_name,no_rec_noise=T
     pp.savefig(fig4)
     
     #Figure5 (Plot Long Output)
-    fig5 = plot_long_output_by_input(n_in,s_long)
+    fig5 = plot_long_output_by_input(n_in,n_rec,s_long,weights)
     pp.savefig(fig5)
     
     #Figure6 (Plot ablation analysis)
-    fig6 = ablation_analysis(n_rec,n_in,sim)
+    fig6 = ablation_analysis(n_rec,n_in,weights,sim)
     pp.savefig(fig6)
     
     #Figure7 (Plot W Structure)
