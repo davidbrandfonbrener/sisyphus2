@@ -90,6 +90,20 @@ def calc_norm(A):
     
 def demean(s):
     return s-np.mean(s,axis=0)
+
+def relu(s):
+    return np.maximum(s,0)
+
+def principal_angle(A,B):
+    ''' A = n x p
+        B = n x q'''
+    
+    Qa, ra = np.linalg.qr(A)
+    Qb, rb = np.linalg.qr(B)
+    C = np.linalg.svd(Qa.T.dot(Qb))
+    angles = np.arccos(C[1])
+    
+    return 180*angles/np.pi
     
 def gen_angle(W,U):
     normW = calc_norm(W)
@@ -156,6 +170,144 @@ def plot_outputs_by_input(s,data,Z,n=5):
 
     plt.title('Output as a function of Input')
     return fig
+
+def pca_plot(n_in,s_long,s):
+
+    s_pca = demean(s_long[300,:,:])
+    c_pca = np.cov(s_pca.T)
+    evals,evecs = np.linalg.eig(c_pca)
+
+    fig = plt.figure()
+    for ii in range(n_in):
+        for jj in range(n_reps):
+            plt.plot(s[:,inp==ii,:][:,jj,:].dot(evecs[:,0]),s[:,inp==ii,:][:,jj,:].dot(evecs[:,1]),c=colors[ii],alpha=.2)
+
+    plt.plot(brec.dot(evecs[:,0]),brec.dot(evecs[:,1]),'kx')
+    
+    return fig
+
+def plot_long_output_by_input(n_in,s_long):
+
+    fig = plt.figure(figsize=(8,1.5))
+    for ii in range(n_in):
+        plt.subplot(1,n_in,ii+1)
+        response = relu(s_long[300,ii,:]).dot(weights['W_out'].T) + weights['b_out']
+        max_real = np.max(np.linalg.eig(W*(s_long[300,ii,:]>0)-np.eye(n_rec))[0].real)
+        stable = max_real<0
+        print max_real
+        if stable:
+            plt.plot(response,c=colors[np.argmax(response)])
+        else:
+            plt.plot(response,'--',c=colors[np.argmax(response)])
+          
+        plt.tight_layout()
+        
+    return fig
+
+def ablation_analysis(n_rec,n_in,sim):
+
+    abl_trial_steps = 1000
+    t_cons = []
+
+    abl_in = np.zeros([abl_trial_steps,n_in*n_rec,n_in])
+    for jj in range(n_rec):
+        for ii in range(n_in):
+            abl_in[10:80,ii+jj*n_in,ii] = 1
+            mask = np.ones([n_rec,n_rec])
+            mask[:,jj] = 0
+            t_cons.append([mask])
+
+    # plt.pcolormesh(abl_in[20,:,:])
+    # plt.show()
+
+    s_abl = np.zeros([abl_in.shape[0],abl_in.shape[1],W.shape[0]])
+    for ii in range(n_in*n_rec):
+        s_abl[:,ii,:] = sim.run_trial(abl_in[:,ii,:],t_connectivity=t_cons[ii]*abl_trial_steps)[1].reshape([abl_in.shape[0],W.shape[0]])
+
+    count = 1
+    outcome = np.zeros([n_rec,n_in])
+    fig = plt.figure(figsize=(8,6))
+    for ii in range(n_rec):
+        for jj in range(n_in):
+            plt.subplot(n_rec,n_in,count)
+            response = relu(s_abl[300,count-1,:]).dot(weights['W_out'].T) + weights['b_out']
+            stable = np.max(np.linalg.eig(W*(s_abl[300,ii,:]>0)-np.eye(n_rec))[0].real)<0
+    #         in_part = np.sum(np.linalg.inv(np.eye(n_rec)-W*(s_abl[300,ii,:]>0)).dot(brec) != s_abl[300,ii,:]>0) == 0
+            outcome[ii,jj] = np.argmax(response)
+            if stable:
+                plt.plot(response,c=colors[np.argmax(response)])
+            else:
+                plt.plot(response,'--',c=colors[np.argmax(response)])
+
+            count += 1
+    
+    plt.tight_layout()
+    
+    return fig
+
+def plot_structure_Wrec(W):
+    N = W.shape[0]
+
+    R = np.random.randn(N,N)/float(N)
+    R = 1.1*R/np.max(np.abs(np.linalg.eig(R)[0]))
+    
+    #calculate the norm of trained rec matrix W and random gaussian matrix R
+    normW = calc_norm(W)
+    normR = calc_norm(R)
+    min_norm = np.min([np.min(normW),np.min(normR)])
+    max_norm = np.max([np.max(normW),np.max(normR)])
+    xx_norm = np.linspace(min_norm,max_norm,50)
+    histnormW, _ = np.histogram(normW,xx_norm)
+    histnormR, _ = np.histogram(normR,xx_norm)
+    
+    #calculate hists for angles between columns
+    
+    angle_W = np.arccos(np.clip((W.T.dot(W))/np.outer(normW,normW),-1.,1.))
+    angle_R = np.arccos(np.clip((R.T.dot(R))/np.outer(normR,normR),-1.,1.))
+    min_val = np.min([np.min(angle_W),np.min(angle_R)])
+    max_val = np.max([np.max(angle_W),np.max(angle_R)])
+    xx = np.linspace(min_val,max_val,50)
+    histW, bin_edgesW = np.histogram(angle_W[np.tril(np.ones_like(W),-1)>0],xx)
+    histR, bin_edgesR = np.histogram(angle_R[np.tril(np.ones_like(R),-1)>0],xx)
+    
+    fig = plt.figure(figsize=(8,8))
+    
+    plt.subplot(3,2,1)
+    plt.pcolormesh(W)
+    plt.colorbar()
+    plt.title('W')
+    
+    plt.subplot(3,2,2)
+    plt.pcolormesh(R)
+    plt.colorbar()
+    plt.title('R')
+    
+    plt.subplot(3,2,3)
+    plt.pcolormesh(angle_W)
+    plt.colorbar()
+    plt.title('$\measuredangle$ W')
+    
+    plt.subplot(3,2,4)
+    plt.pcolormesh(angle_R)
+    plt.colorbar()
+    plt.title('$\measuredangle$ R')
+    
+    plt.subplot(3,2,5)
+    plt.bar(xx[:-1],histW,width=bin_edgesW[1]-bin_edgesW[0])
+    plt.bar(xx[:-1],-histR,width=bin_edgesR[1]-bin_edgesR[0],color='g')
+    
+    plt.legend(['W','Random'],fontsize=10,loc='lower left')
+    plt.title('Hist of Angles')
+    
+    plt.subplot(3,2,6)
+    plt.bar(xx_norm[:-1],histnormW,width=xx_norm[1]-xx_norm[0])
+    plt.bar(xx_norm[:-1],-histnormR,width=xx_norm[1]-xx_norm[0],color='g')
+    
+    plt.legend(['W','Random'],fontsize=10,loc='lower left')
+    plt.title('Hist of Norms')
+    plt.tight_layout()
+    
+    return fig
     
 def analysis_and_write(params,weights_path,fig_directory,run_name,no_rec_noise=True):
     
@@ -187,9 +339,22 @@ def analysis_and_write(params,weights_path,fig_directory,run_name,no_rec_noise=T
     sim = Simulator(params, weights_path=weights_path)
     output,states = sim.run_trial(data[0][0,:,:],t_connectivity=False)
     
+    n_in = n_out = data[0].shape[2]
+    n_rec = W.shape[0]
+    
+    #generate trials
     s = np.zeros([data[0].shape[1],data[0].shape[0],W.shape[0]])
     for ii in range(data[0].shape[0]):
         s[:,ii,:] = sim.run_trial(data[0][ii,:,:],t_connectivity=False)[1].reshape([data[0].shape[1],W.shape[0]])
+    
+    #generate long duration trials
+    long_in = np.zeros([10000,n_in,n_in])
+    for ii in range(n_in):
+        long_in[10:80,ii,ii] = 1
+
+    s_long = np.zeros([long_in.shape[0],long_in.shape[1],W.shape[0]])
+    for ii in range(n_in):
+        s_long[:,ii,:] = sim.run_trial(long_in[:,ii,:],t_connectivity=False)[1].reshape([long_in.shape[0],W.shape[0]])
     
     #Figure 0 (Plot Params)
     fig0 = plot_params(original_params)
@@ -199,13 +364,29 @@ def analysis_and_write(params,weights_path,fig_directory,run_name,no_rec_noise=T
     fig1 = plot_single_trial(data,states,output)
     pp.savefig(fig1)    
     
-    #Figure 1 (plot fixed points - activity at end of trial)
-    fig1 = plot_fps_vs_activity(s,W,brec)
-    pp.savefig(fig1)
-    
-    #Figure 2 (Plot output activity)
-    fig2 = plot_outputs_by_input(s,data,Wout,n=Win.shape[1])
+    #Figure 2 (plot fixed points - activity at end of trial)
+    fig2 = plot_fps_vs_activity(s,W,brec)
     pp.savefig(fig2)
+    
+    #Figure 3 (Plot output activity)
+    fig3 = plot_outputs_by_input(s,data,Wout,n=Win.shape[1])
+    pp.savefig(fig3)
+    
+    #Figure 4 (Plot 2D PCA projection)
+    fig4 = pca_plot(n_in,s_long,s)
+    pp.savefig(fig4)
+    
+    #Figure5 (Plot Long Output)
+    fig5 = plot_long_output_by_input(n_in,s_long)
+    pp.savefig(fig5)
+    
+    #Figure6 (Plot ablation analysis)
+    fig6 = ablation_analysis(n_rec,n_in,sim)
+    pp.savefig(fig6)
+    
+    #Figure7 (Plot W Structure)
+    fig7 = plot_structure_Wrec(W)
+    pp.savefig(fig7)
     
     
     pp.close()
