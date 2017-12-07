@@ -171,7 +171,7 @@ def plot_outputs_by_input(s,data,Z,n=5):
     plt.title('Output as a function of Input')
     return fig
 
-def pca_plot(n_in,s_long,s):
+def pca_plot(n_in,s_long,s,n_reps=8):
 
     s_pca = demean(s_long[300,:,:])
     c_pca = np.cov(s_pca.T)
@@ -180,7 +180,7 @@ def pca_plot(n_in,s_long,s):
     fig = plt.figure()
     for ii in range(n_in):
         for jj in range(n_reps):
-            plt.plot(s[:,inp==ii,:][:,jj,:].dot(evecs[:,0]),s[:,inp==ii,:][:,jj,:].dot(evecs[:,1]),c=colors[ii],alpha=.2)
+            plt.plot(s[:,inp==ii,:][:,jj,:].dot(evecs[:,0]),s[:,inp==ii,:][:,jj,:].dot(evecs[:,1]),c=colors[ii],alpha=.25)
 
     plt.plot(brec.dot(evecs[:,0]),brec.dot(evecs[:,1]),'kx')
     
