@@ -162,7 +162,7 @@ def plot_fps_vs_activity(s,W,brec):
 def plot_outputs_by_input(s,data,Z,n=5):
     
     fig = plt.figure()
-    colors = ['r','g','b','k','c']*4
+    colors = ['r','g','b','k','c']*10
     
     for ii in range(n): 
         out = np.maximum(s[-1,data[0][:,40,ii]>.2,:],0).dot(Z.T).T
@@ -177,7 +177,7 @@ def pca_plot(n_in,s_long,s,inp,brec,n_reps=8):
     c_pca = np.cov(s_pca.T)
     evals,evecs = np.linalg.eig(c_pca)
 
-    colors = ['r','g','b','k','c']*4
+    colors = ['r','g','b','k','c']*10
     fig = plt.figure()
     for ii in range(n_in):
         for jj in range(n_reps):
@@ -189,7 +189,7 @@ def pca_plot(n_in,s_long,s,inp,brec,n_reps=8):
 
 def plot_long_output_by_input(n_in,n_rec,s_long,weights):
 
-    colors = ['r','g','b','k','c']*4
+    colors = ['r','g','b','k','c']*10
     fig = plt.figure(figsize=(8,1.5))
     for ii in range(n_in):
         plt.subplot(1,n_in,ii+1)
@@ -212,7 +212,7 @@ def ablation_analysis(n_rec,n_in,weights,sim):
     W = weights['W_rec']
     t_cons = []
 
-    colors = ['r','g','b','k','c']*4
+    colors = ['r','g','b','k','c']*10
     
     abl_in = np.zeros([abl_trial_steps,n_in*n_rec,n_in])
     for jj in range(n_rec):
@@ -314,6 +314,17 @@ def plot_structure_Wrec(W):
     
     return fig
     
+def plot_dist_to_fp(s_long):
+    fig = plt.figure()
+
+    colors = ['r','g','b','k','c']*10
+
+    part_dist = np.min(np.abs(s_long[300,:,:]),axis=1)
+    plt.bar(np.arange(s_long.shape[1]),part_dist,color=colors[:s_long.shape[1]])
+    plt.title('Distance to Nearest Partition')
+    
+    return fig
+    
 def analysis_and_write(params,weights_path,fig_directory,run_name,no_rec_noise=True):
     
     from matplotlib.backends.backend_pdf import PdfPages
@@ -396,6 +407,10 @@ def analysis_and_write(params,weights_path,fig_directory,run_name,no_rec_noise=T
     #Figure7 (Plot W Structure)
     fig7 = plot_structure_Wrec(W)
     pp.savefig(fig7)
+    
+    #Figure8 (Bar Plot of distance to nearest partition)
+    fig8 = plot_dist_to_fp(s_long)
+    pp.savefig(fig8)
     
     
     pp.close()
