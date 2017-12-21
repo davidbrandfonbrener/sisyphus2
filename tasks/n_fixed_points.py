@@ -159,14 +159,21 @@ def plot_fps_vs_activity(s,W,brec):
         
     return fig
     
-def plot_outputs_by_input(s,data,Z,n=5):
+def plot_outputs_by_input(s,data,weights,n=5):
     
     fig = plt.figure()
     colors = ['r','g','b','k','c']*10
     
     for ii in range(n): 
-        out = np.maximum(s[-1,data[0][:,40,ii]>.2,:],0).dot(Z.T).T
+        out = np.maximum(s[-1,data[0][:,40,ii]>.2,:],0).dot(weights['W_out'].T).T + weights['b_out']
         plt.plot(out,c=colors[np.mod(ii,5)],alpha=.4)
+        
+    response = np.argmax(relu(s[-1,:,:]).dot(weights['W_out'].T)+weights['b_out'],axis=1)
+
+    inp = np.argmax(data[0][:,40,:],axis=1)
+    accuracy = np.sum(inp==response)/float(len(inp))
+
+    plt.xlabel('accuracy = ' + str(100*accuracy) + ' %')
 
     plt.title('Output as a function of Input')
     return fig
@@ -325,6 +332,14 @@ def plot_dist_to_fp(s_long):
     
     return fig
     
+def plot_fp_partitions(s_long):
+    
+    fig = plt.figure(figsize=(8,2))
+    plt.pcolormesh(s_long[300,:,:]>0,cmap='gray')
+    plt.colorbar()
+    
+    return fig
+    
 def analysis_and_write(params,weights_path,fig_directory,run_name,no_rec_noise=True):
     
     from matplotlib.backends.backend_pdf import PdfPages
@@ -343,6 +358,7 @@ def analysis_and_write(params,weights_path,fig_directory,run_name,no_rec_noise=T
         
     pp = PdfPages(fig_directory + '/' + run_name + '.pdf')
 
+    params['sample_size'] = 2000
     generator = generate_train_trials(params)
     weights = np.load(weights_path)
     
@@ -389,7 +405,7 @@ def analysis_and_write(params,weights_path,fig_directory,run_name,no_rec_noise=T
     pp.savefig(fig2)
     
     #Figure 3 (Plot output activity)
-    fig3 = plot_outputs_by_input(s,data,Wout,n=Win.shape[1])
+    fig3 = plot_outputs_by_input(s,data,weights,n=Win.shape[1])
     pp.savefig(fig3)
     
     #Figure 4 (Plot 2D PCA projection)
@@ -411,6 +427,9 @@ def analysis_and_write(params,weights_path,fig_directory,run_name,no_rec_noise=T
     #Figure8 (Bar Plot of distance to nearest partition)
     fig8 = plot_dist_to_fp(s_long)
     pp.savefig(fig8)
+    
+    fig9 = plot_fp_partitions(s_long)
+    pp.savefig(fig9)
     
     
     pp.close()
