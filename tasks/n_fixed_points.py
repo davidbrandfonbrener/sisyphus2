@@ -165,8 +165,8 @@ def plot_outputs_by_input(s,data,weights,n=5):
     colors = ['r','g','b','k','c']*10
     
     for ii in range(n): 
-        out = np.maximum(s[-1,data[0][:,40,ii]>.2,:],0).dot(weights['W_out'].T).T + weights['b_out']
-        plt.plot(out,c=colors[np.mod(ii,5)],alpha=.4)
+        out = np.maximum(s[-1,data[0][:,40,ii]>.2,:],0).dot(weights['W_out'].T) + weights['b_out']
+        plt.plot(out.T,c=colors[np.mod(ii,5)],alpha=.4)
         
     response = np.argmax(relu(s[-1,:,:]).dot(weights['W_out'].T)+weights['b_out'],axis=1)
 
@@ -405,8 +405,11 @@ def analysis_and_write(params,weights_path,fig_directory,run_name,no_rec_noise=T
     pp.savefig(fig2)
     
     #Figure 3 (Plot output activity)
-    fig3 = plot_outputs_by_input(s,data,weights,n=Win.shape[1])
-    pp.savefig(fig3)
+    try:
+        fig3 = plot_outputs_by_input(s,data,weights,n=Win.shape[1])
+        pp.savefig(fig3)
+    except Exception:
+        pass
     
     #Figure 4 (Plot 2D PCA projection)
     fig4 = pca_plot(n_in,s_long,s,inp,brec)
