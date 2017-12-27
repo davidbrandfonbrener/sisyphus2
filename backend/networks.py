@@ -438,7 +438,7 @@ class Model(object):
     # train the model using Adam
     def train(self, sess, generator,
               learning_rate=.001, training_iters=50000,
-              batch_size=64, display_step=10,weigth_save_step=100, save_weights_path= None,
+              batch_size=64, display_step=10,weight_save_step=100, save_weights_path= None,
               generator_function= None, training_weights_path = None):
 
 
