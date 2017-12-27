@@ -438,7 +438,7 @@ class Model(object):
     # train the model using Adam
     def train(self, sess, generator,
               learning_rate=.001, training_iters=50000,
-              batch_size=64, display_step=10, save_weights_path= None,
+              batch_size=64, display_step=10,weigth_save_step=100, save_weights_path= None,
               generator_function= None, training_weights_path = None):
 
 
@@ -479,6 +479,7 @@ class Model(object):
 
 
                 # allow for saving weights during training
+            if step % weight_save_step == 0:
                 if training_weights_path is not None:
                     np.savez(training_weights_path  + str(step), W_in=self.W_in.eval(session=sess),
                              W_rec=self.W_rec.eval(session=sess),
