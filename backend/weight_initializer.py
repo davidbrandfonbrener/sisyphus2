@@ -33,6 +33,10 @@ class weight_initializer(object):
             weights_path = self.zero_matrix()
         elif self.init_type == 'block_feed_forward':
             weights_path = self.block_feedforward()
+        elif self.init_type == 'flip_flops':
+            weights_path = self.flip_flops()
+        elif self.init_type == 'half_flip_flops':
+            weights_path = self.half_flip_flops()
             
         return weights_path
             
@@ -274,6 +278,108 @@ class weight_initializer(object):
         output_Connectivity[:,:N_rec/2] = 0
         
                 
+        if not self.autapses:
+            W_rec[np.eye(N_rec)==1] = 0
+            rec_Connectivity[np.eye(N_rec)==1] = 0
+        
+        np.savez(weights_path, W_in = W_in,
+                                W_rec = W_rec,
+                                W_out = W_out,
+                                b_rec = b_rec,
+                                b_out = b_out,
+                                init_state = init_state,
+                                input_Connectivity = input_Connectivity,
+                                rec_Connectivity= rec_Connectivity,
+                                output_Connectivity=output_Connectivity)
+        
+        return weights_path
+    
+    
+    def flip_flops(self,alpha=1.):
+        '''Generate random feedforward wrec (lower triangular)'''
+       
+        N_in    = self.N_in
+        N_rec   = self.N_rec
+        N_out   = self.N_out
+        
+        assert np.mod(N_rec,2)==0,"N_rec must be even"
+        
+        weights_path = self.init_weights_path
+    
+        #Uniform between -.1 and .1
+        W_in = .2*np.random.rand(N_rec,N_in) - .1
+        W_out = .2*np.random.rand(N_out,N_rec) - .1
+        
+        b_rec = .5*np.ones(N_rec)
+        b_out = np.zeros(N_out)
+        
+        init_state = .1 + .01*np.random.randn(N_rec)
+        
+        #flip flop circuit
+        w11 = w22 = .5
+        w12 = w21 = -2.
+        W = np.array([[w11,w12],[w21,w22]])
+        
+        W_rec = np.zeros([N_rec,N_rec])
+        for ii in range(0,N_rec,2):
+            W_rec[ii:ii+2,ii:ii+2] = W
+        
+        input_Connectivity = np.ones([N_rec,N_in])
+        rec_Connectivity = np.ones([N_rec,N_rec])
+        output_Connectivity = np.ones([N_out,N_rec])
+        
+        if not self.autapses:
+            W_rec[np.eye(N_rec)==1] = 0
+            rec_Connectivity[np.eye(N_rec)==1] = 0
+        
+        np.savez(weights_path, W_in = W_in,
+                                W_rec = W_rec,
+                                W_out = W_out,
+                                b_rec = b_rec,
+                                b_out = b_out,
+                                init_state = init_state,
+                                input_Connectivity = input_Connectivity,
+                                rec_Connectivity= rec_Connectivity,
+                                output_Connectivity=output_Connectivity)
+        
+        return weights_path
+    
+    
+    def half_flip_flops(self,alpha=1.):
+        '''Generate random feedforward wrec (lower triangular)'''
+       
+        N_in    = self.N_in
+        N_rec   = self.N_rec
+        N_out   = self.N_out
+        
+        assert np.mod(N_rec,2)==0,"N_rec must be even"
+        
+        weights_path = self.init_weights_path
+    
+        #Uniform between -.1 and .1
+        W_in = .2*np.random.rand(N_rec,N_in) - .1
+        W_out = .2*np.random.rand(N_out,N_rec) - .1
+        
+        b_rec = .5*np.ones(N_rec)
+        b_out = np.zeros(N_out)
+        
+        init_state = .1 + .01*np.random.randn(N_rec)
+        
+        #flip flop circuit
+        w11 = w22 = .5
+        w12 = w21 = -2.
+        W = np.array([[w11,w12],[w21,w22]])
+        
+        W_rec = np.zeros([N_rec,N_rec])
+        for ii in range(0,N_rec//2,2):
+            W_rec[ii:ii+2,ii:ii+2] = W
+            
+        W_rec[N_rec//2:,N_rec//2:] = np.linalg.qr(np.random.randn(N_rec//2,N_rec//2))[0]
+        
+        input_Connectivity = np.ones([N_rec,N_in])
+        rec_Connectivity = np.ones([N_rec,N_rec])
+        output_Connectivity = np.ones([N_out,N_rec])
+        
         if not self.autapses:
             W_rec[np.eye(N_rec)==1] = 0
             rec_Connectivity[np.eye(N_rec)==1] = 0
