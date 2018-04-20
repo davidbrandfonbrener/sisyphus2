@@ -207,7 +207,15 @@ class RNN(object):
 
     def save(self, sess, save_path):
 
+        weights_dict = dict()
 
+        for var in tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES):
+            # avoid saving duplicates
+            if var.name.endswith(':0'):
+                name = var.name[:-2]
+                weights_dict.update( {name: var.eval(session = sess)} )
+
+        np.savez(save_path, **weights_dict)
 
         return
 
@@ -285,15 +293,7 @@ class RNN(object):
             # --------------------------------------------------
             if epoch % save_training_weights_epoch == 0:
                 if training_weights_path is not None:
-                    np.savez(training_weights_path + str(epoch), W_in=self.W_in.eval(session=sess),
-                             W_rec=self.W_rec.eval(session=sess),
-                             W_out=self.W_out.eval(session=sess),
-                             b_rec=self.b_rec.eval(session=sess),
-                             b_out=self.b_out.eval(session=sess),
-                             init_state=self.init_state.eval(session=sess),
-                             input_Connectivity=self.input_Connectivity.eval(session=sess),
-                             rec_Connectivity=self.rec_Connectivity.eval(session=sess),
-                             output_Connectivity=self.output_Connectivity.eval(session=sess))
+                    self.save(sess, training_weights_path + str(epoch)))
 
             epoch += 1
 
@@ -304,15 +304,7 @@ class RNN(object):
         # Save final weights
         # --------------------------------------------------
         if save_weights_path is not None:
-            np.savez(save_weights_path, W_in=self.W_in.eval(session=sess),
-                     W_rec=self.W_rec.eval(session=sess),
-                     W_out=self.W_out.eval(session=sess),
-                     b_rec=self.b_rec.eval(session=sess),
-                     b_out=self.b_out.eval(session=sess),
-                     init_state=self.init_state.eval(session=sess),
-                     input_Connectivity=self.input_Connectivity.eval(session=sess),
-                     rec_Connectivity=self.rec_Connectivity.eval(session=sess),
-                     output_Connectivity=self.output_Connectivity.eval(session=sess))
+            self.save(sess, save_weights_path)
             print("Model saved in file: %s" % save_weights_path)
 
         # --------------------------------------------------
