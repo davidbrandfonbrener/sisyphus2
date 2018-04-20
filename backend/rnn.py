@@ -3,7 +3,7 @@ from __future__ import print_function
 import tensorflow as tf
 import numpy as np
 from time import time
-import regularization
+from regularization import Regularizer
 
 
 class RNN(object):
@@ -32,7 +32,7 @@ class RNN(object):
         self.load_weights_path = params.get('load_weights_path', None)
 
         # ----------------------------------
-        # Dale matrix
+        # Dale's law matrix
         # ----------------------------------
         dale_vec = np.ones(N_rec)
         if self.dale_ratio is not None:
@@ -45,32 +45,15 @@ class RNN(object):
             self.dale_out = np.diag(dale_vec)
 
         # ----------------------------------
-        # Connectivity
+        # Connectivity masking
         # ----------------------------------
-        self.input_connectivity_mask = params.get('input_connectivity_mask', None)
-        self.recurrent_connectivity_mask = params.get('recurrent_connectivity_mask', None)
-        self.output_connectivity_mask = params.get('output_connectivity_mask', None)
-        if self.input_connectivity_mask is None:
-            self.input_connectivity_mask = np.ones((N_rec, N_in))
-        if self.recurrent_connectivity_mask is None:
-            self.recurrent_connectivity_mask = np.ones((N_rec, N_rec))
-        if self.output_connectivity_mask is None:
-            self.output_connectivity_mask = np.ones((N_out, N_rec))
+        self.input_connectivity_mask = params.get('input_connectivity_mask',
+                                                  np.ones((N_rec, N_in)))
+        self.recurrent_connectivity_mask = params.get('recurrent_connectivity_mask',
+                                                      np.ones((N_rec, N_rec)))
+        self.output_connectivity_mask = params.get('output_connectivity_mask',
+                                                   np.ones((N_out, N_rec)))
 
-        # ----------------------------------
-        # MOVE THIS?????????????????????
-        # regularization coefficients
-        # ----------------------------------
-        self.L1_in = params.get('L1_in', 0)
-        self.L1_rec = params.get('L1_rec', 0)
-        self.L1_out = params.get('L1_out', 0)
-
-        self.L2_in = params.get('L2_in', 0)
-        self.L2_rec = params.get('L2_rec', 0)
-        self.L2_out = params.get('L2_out', 0)
-
-        self.L2_firing_rate = params.get('L2_firing_rate', 0)
-        self.sussillo_constant = params.get('sussillo_constant', 0)
 
         # ----------------------------------
         # Trainable features
@@ -83,7 +66,7 @@ class RNN(object):
         self.init_state_train = params.get('init_state_train', True)
 
         # ----------------------------------
-        # Tensorflow input initializations
+        # Tensorflow input/output initializations
         # ----------------------------------
         self.x = tf.placeholder("float", [N_batch, N_steps, N_in])
         self.y = tf.placeholder("float", [N_batch, N_steps, N_out])
@@ -176,11 +159,20 @@ class RNN(object):
                                                    trainable=False)
 
         # --------------------------------------------------
-        # Define the computation graph to calculate the loss
+        # Define the predictions and loss
         # --------------------------------------------------
         self.predictions, self.states = self.compute_predictions()
-        self.error = self.mean_square_error()
-        self.loss = self.error + self.regularization()
+        self.loss = ERROR(self.y, self.predictions, self.output_mask)
+
+        # --------------------------------------------------
+        # Define the regularization
+        # --------------------------------------------------
+        self.reg = Regularizer(params).regularization(self)
+
+        # --------------------------------------------------
+        # Define the total regularized loss
+        # --------------------------------------------------
+        self.reg_loss = self.loss + self.reg
 
 
 
@@ -206,16 +198,6 @@ class RNN(object):
 
 
 
-    def mean_square_error(self):
-        return tf.reduce_mean(tf.square(self.output_mask * (self.predictions - self.y)))
-
-
-    def reg_loss(self):
-        return self.mean_square_error() + regularization.regularization(self)
-
-
-
-
 
 
 
@@ -229,7 +211,7 @@ class RNN(object):
 
 
         optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
-        grads = optimizer.compute_gradients(self.loss)
+        grads = optimizer.compute_gradients(self.reg_loss)
         clipped_grads = [(tf.clip_by_norm(grad, 1.0), var)
                          if grad is not None else (grad, var)
                          for grad, var in grads]
@@ -252,16 +234,16 @@ class RNN(object):
                 # --------------------------------------------------
                 # Output batch loss
                 # --------------------------------------------------
-                loss = sess.run(self.loss,
+                reg_loss = sess.run(self.reg_loss,
                                 feed_dict={self.x: batch_x, self.y: batch_y, self.output_mask: output_mask})
                 print("Iter " + str(step * batch_size) + ", Minibatch Loss= " + \
-                      "{:.6f}".format(loss))
+                      "{:.6f}".format(reg_loss))
 
                 # --------------------------------------------------
                 # Allow for curriculum learning
                 # --------------------------------------------------
                 if generator_function is not None:
-                    generator = generator_function(loss, step)
+                    generator = generator_function(reg_loss, step)
 
             # --------------------------------------------------
             # Save intermediary weights
