@@ -1,7 +1,7 @@
 import numpy as np
 
 
-class weight_initializer(object):
+class WeightInitializer(object):
     
     def __init__(self,params,init_weights_path,autapses=True):
         self.N_in       = params['N_in']

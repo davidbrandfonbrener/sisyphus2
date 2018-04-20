@@ -7,7 +7,7 @@ import numpy as np
 import tensorflow as tf
 from backend.networks import Model
 #import backend.visualizations as V
-from backend.weight_initializer import weight_initializer
+from backend.weight_initializer import WeightInitializer
 from backend.simulation_tools import Simulator
 
 # Builds a dictionary of parameters that specifies the information
@@ -262,7 +262,7 @@ if __name__ == "__main__":
     
     'external weight intializer class'
     autapses = True
-    w_initializer = weight_initializer(params,output_weights_path[:-4] + '_init',autapses=autapses)
+    w_initializer = WeightInitializer(params, output_weights_path[:-4] + '_init', autapses=autapses)
     input_weights_path = w_initializer.gen_weight_dict()
     params['load_weights_path'] = input_weights_path + '.npz'
 
