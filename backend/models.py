@@ -1,9 +1,9 @@
-from rnn import RNN_model
+from rnn import RNN
 import tensorflow as tf
 
 
 
-class Basic(RNN_model):
+class Basic(RNN):
 
     def rnn_step(self, rnn_in, state):
 
@@ -23,7 +23,7 @@ class Basic(RNN_model):
 
 
 
-class Basic_scan(RNN_model):
+class Basic_scan(RNN):
 
     def rnn_step(self, rnn_in, state):
 
@@ -45,7 +45,7 @@ class Basic_scan(RNN_model):
 
 
 
-class LSTM(RNN_model):
+class LSTM(RNN):
 
     def rnn_step(self, rnn_in, state):
 

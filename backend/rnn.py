@@ -6,7 +6,7 @@ from time import time
 import regularization
 
 
-class RNN_model(object):
+class RNN(object):
     def __init__(self, params):
         # ----------------------------------
         # Network sizes (tensor dimensions)
