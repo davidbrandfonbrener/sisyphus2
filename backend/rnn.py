@@ -98,19 +98,21 @@ class RNN(object):
             self.recurrent_connectivity_mask = weights['rec_Connectivity']
             self.output_connectivity_mask = weights['output_Connectivity']
 
-        self.init_state = tf.get_variable('init_state', [N_batch, N_rec],
-                                          initializer=init_state_initializer)
-
         # ------------------------------------------------
         # Trainable variables:
-        # Weight matrices and bias weights
+        # Initial State, weight matrices and biases
         # ------------------------------------------------
+
+        self.init_state = tf.get_variable('init_state', [N_batch, N_rec],
+                                          initializer=init_state_initializer,
+                                          trainable=self.init_state_train)
 
         # Input weight matrix:
         self.W_in = \
             tf.get_variable('W_in', [N_rec, N_in],
                             initializer=W_in_initializer,
                             trainable=self.W_in_train)
+
         # Recurrent weight matrix:
         self.W_rec = \
             tf.get_variable(
@@ -118,6 +120,7 @@ class RNN(object):
                 [N_rec, N_rec],
                 initializer=W_rec_initializer,
                 trainable=self.W_rec_train)
+
         # Output weight matrix:
         self.W_out = tf.get_variable('W_out', [N_out, N_rec],
                                      initializer=W_out_initializer,
@@ -139,6 +142,7 @@ class RNN(object):
         self.Dale_rec = tf.get_variable('Dale_rec', [N_rec, N_rec],
                                         initializer=tf.constant_initializer(self.dale_rec),
                                         trainable=False)
+
         # Output Dale's law weight matrix:
         self.Dale_out = tf.get_variable('Dale_out', [N_rec, N_rec],
                                         initializer=tf.constant_initializer(self.dale_out),
@@ -201,60 +205,87 @@ class RNN(object):
 
 
 
+    def save(self, sess, save_path):
 
 
 
+        return
 
 
-    def train(self, trial_batch_generator,
-              learning_rate=.001, training_iters=50000,
-              batch_size=64, display_step=10, save_weights_step=100, save_weights_path=None,
-              generator_function=None, training_weights_path=None):
+    def train(self, trial_batch_generator, train_params):
 
+        # --------------------------------------------------
+        # Extract params
+        # --------------------------------------------------
+        batch_size = train_params.get('batch_size', 64)
+        learning_rate = train_params.get('learning_rate', .001)
+        training_iters = train_params.get('training_iters', 10000)
+        print_epoch = train_params.get('print_epoch', 10)
+        save_weights_path = train_params.get('save_weights_path', None)
+        save_training_weights_epoch = train_params.get('save_training_weights_epoch', 100)
+        training_weights_path = train_params.get('training_weights_path', None)
+        generator_function = train_params.get('generator function', None)
+        optimizer = train_params.get('optimizer',
+                                     tf.train.AdamOptimizer(learning_rate = learning_rate))
+        clip_grads = train_params.get('clip_grads', True)
+
+        # --------------------------------------------------
+        # open a session
+        # --------------------------------------------------
         sess = tf.Session()
 
-
-        optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
+        # --------------------------------------------------
+        # Compute gradients
+        # --------------------------------------------------
         grads = optimizer.compute_gradients(self.reg_loss)
-        clipped_grads = [(tf.clip_by_norm(grad, 1.0), var)
-                         if grad is not None else (grad, var)
-                         for grad, var in grads]
-        optimize = optimizer.apply_gradients(clipped_grads)
 
-        # run session
+        # --------------------------------------------------
+        # Clip gradients
+        # --------------------------------------------------
+        if clip_grads:
+            grads = [(tf.clip_by_norm(grad, 1.0), var)
+                                if grad is not None else (grad, var)
+                                for grad, var in grads]
+
+        # --------------------------------------------------
+        # Call the optimizer and initialize session
+        # --------------------------------------------------
+        optimize = optimizer.apply_gradients(grads)
         sess.run(tf.global_variables_initializer())
-        step = 1
+        epoch = 1
 
-        # time training
+        # --------------------------------------------------
+        # Record training time for performance benchmarks
+        # --------------------------------------------------
         t1 = time()
 
         # --------------------------------------------------
         # Training loop
         # --------------------------------------------------
-        while step * batch_size < training_iters:
+        while epoch * batch_size < training_iters:
             batch_x, batch_y, output_mask = trial_batch_generator.next()
             sess.run(optimize, feed_dict={self.x: batch_x, self.y: batch_y, self.output_mask: output_mask})
-            if step % display_step == 0:
-                # --------------------------------------------------
-                # Output batch loss
-                # --------------------------------------------------
+            # --------------------------------------------------
+            # Output batch loss
+            # --------------------------------------------------
+            if epoch % print_epoch == 0:
                 reg_loss = sess.run(self.reg_loss,
                                 feed_dict={self.x: batch_x, self.y: batch_y, self.output_mask: output_mask})
-                print("Iter " + str(step * batch_size) + ", Minibatch Loss= " + \
+                print("Iter " + str(epoch * batch_size) + ", Minibatch Loss= " + \
                       "{:.6f}".format(reg_loss))
 
                 # --------------------------------------------------
                 # Allow for curriculum learning
                 # --------------------------------------------------
                 if generator_function is not None:
-                    trial_batch_generator = generator_function(reg_loss, step)
+                    trial_batch_generator = generator_function(reg_loss, epoch)
 
             # --------------------------------------------------
             # Save intermediary weights
             # --------------------------------------------------
-            if step % save_weights_step == 0:
+            if epoch % save_training_weights_epoch == 0:
                 if training_weights_path is not None:
-                    np.savez(training_weights_path + str(step), W_in=self.W_in.eval(session=sess),
+                    np.savez(training_weights_path + str(epoch), W_in=self.W_in.eval(session=sess),
                              W_rec=self.W_rec.eval(session=sess),
                              W_out=self.W_out.eval(session=sess),
                              b_rec=self.b_rec.eval(session=sess),
@@ -264,9 +295,10 @@ class RNN(object):
                              rec_Connectivity=self.rec_Connectivity.eval(session=sess),
                              output_Connectivity=self.output_Connectivity.eval(session=sess))
 
-            step += 1
+            epoch += 1
+
         t2 = time()
-        print("Optimization Finished!")
+        print("Optimization finished!")
 
         # --------------------------------------------------
         # Save final weights
@@ -283,7 +315,9 @@ class RNN(object):
                      output_Connectivity=self.output_Connectivity.eval(session=sess))
             print("Model saved in file: %s" % save_weights_path)
 
-
+        # --------------------------------------------------
+        # Close session
+        # --------------------------------------------------
         sess.close()
 
         return (t2 - t1)
