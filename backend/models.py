@@ -23,7 +23,7 @@ class Basic(RNN):
 
 
 
-class Basic_scan(RNN):
+class Basic_scan(Basic):
 
     def rnn_step(self, rnn_in, state):
 
@@ -33,7 +33,6 @@ class Basic_scan(RNN):
     def rnn_output(self, new_state):
 
         pass
-
 
     def forward_pass(self):
 

@@ -1,4 +1,3 @@
-
 import tensorflow as tf
 
 
@@ -20,7 +19,7 @@ class Regularizer(object):
         self.sussillo_constant = params.get('sussillo_constant', 0)
 
 
-    def regularization(self, model):
+    def set_model_regularization(self, model):
         reg = 0
 
         # ----------------------------------

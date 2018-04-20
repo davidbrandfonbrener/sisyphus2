@@ -3,7 +3,8 @@ from __future__ import print_function
 import tensorflow as tf
 import numpy as np
 from time import time
-from regularization import Regularizer
+from regularizations import Regularizer
+from loss_functions import LossFunction
 
 
 class RNN(object):
@@ -53,7 +54,6 @@ class RNN(object):
                                                       np.ones((N_rec, N_rec)))
         self.output_connectivity_mask = params.get('output_connectivity_mask',
                                                    np.ones((N_out, N_rec)))
-
 
         # ----------------------------------
         # Trainable features
@@ -159,15 +159,19 @@ class RNN(object):
                                                    trainable=False)
 
         # --------------------------------------------------
-        # Define the predictions and loss
+        # Define the predictions
         # --------------------------------------------------
-        self.predictions, self.states = self.compute_predictions()
-        self.loss = ERROR(self.y, self.predictions, self.output_mask)
+        self.predictions, self.states = self.forward_pass()
+
+        # --------------------------------------------------
+        # Define the loss (based on the predictions)
+        # --------------------------------------------------
+        self.loss = LossFunction(params).set_model_loss(self)
 
         # --------------------------------------------------
         # Define the regularization
         # --------------------------------------------------
-        self.reg = Regularizer(params).regularization(self)
+        self.reg = Regularizer(params).set_model_regularization(self)
 
         # --------------------------------------------------
         # Define the total regularized loss
@@ -179,12 +183,12 @@ class RNN(object):
 
 
 
-    def rnn_step(self, rnn_in, state):
+    def recurrent_timestep(self, rnn_in, state):
 
         pass
 
 
-    def rnn_output(self, new_state):
+    def output_timestep(self, state):
 
         pass
 
@@ -202,7 +206,7 @@ class RNN(object):
 
 
 
-    def train(self, generator,
+    def train(self, trial_batch_generator,
               learning_rate=.001, training_iters=50000,
               batch_size=64, display_step=10, save_weights_step=100, save_weights_path=None,
               generator_function=None, training_weights_path=None):
@@ -228,7 +232,7 @@ class RNN(object):
         # Training loop
         # --------------------------------------------------
         while step * batch_size < training_iters:
-            batch_x, batch_y, output_mask = generator.next()
+            batch_x, batch_y, output_mask = trial_batch_generator.next()
             sess.run(optimize, feed_dict={self.x: batch_x, self.y: batch_y, self.output_mask: output_mask})
             if step % display_step == 0:
                 # --------------------------------------------------
@@ -243,12 +247,12 @@ class RNN(object):
                 # Allow for curriculum learning
                 # --------------------------------------------------
                 if generator_function is not None:
-                    generator = generator_function(reg_loss, step)
+                    trial_batch_generator = generator_function(reg_loss, step)
 
             # --------------------------------------------------
             # Save intermediary weights
             # --------------------------------------------------
-            if step % weight_save_step == 0:
+            if step % save_weights_step == 0:
                 if training_weights_path is not None:
                     np.savez(training_weights_path + str(step), W_in=self.W_in.eval(session=sess),
                              W_rec=self.W_rec.eval(session=sess),
