@@ -16,12 +16,12 @@ class LSTM(RNN):
 
 
 
-    def rnn_step(self, rnn_in, state):
+    def recurrent_timestep(self, rnn_in, state):
 
         pass
 
 
-    def rnn_output(self, new_state):
+    def output_timestep(self, new_state):
 
         pass
 
