@@ -19,14 +19,10 @@ class LSTM(RNN):
         self.init_hidden_initializer = tf.random_normal_initializer(mean=0.1, stddev=0.01)
         self.init_cell_initializer = tf.random_normal_initializer(mean=0.1, stddev=0.01)
 
-        self.W_f_initializer = tf.constant_initializer(
-                0.1 * np.random.uniform(-1, 1, size=(self.N_concat, self.N_rec)))
-        self.W_i_initializer = tf.constant_initializer(
-                0.1 * np.random.uniform(-1, 1, size=(self.N_concat, self.N_rec)))
-        self.W_c_initializer = tf.constant_initializer(
-                0.1 * np.random.uniform(-1, 1, size=(self.N_concat, self.N_rec)))
-        self.W_o_initializer = tf.constant_initializer(
-                0.1 * np.random.uniform(-1, 1, size=(self.N_concat, self.N_rec)))
+        self.W_f_initializer = tf.random_normal_initializer(mean=0, stddev=0.1)
+        self.W_i_initializer = tf.random_normal_initializer(mean=0, stddev=0.1)
+        self.W_c_initializer = tf.random_normal_initializer(mean=0, stddev=0.1)
+        self.W_o_initializer = tf.random_normal_initializer(mean=0, stddev=0.1)
 
         self.b_f_initializer = tf.constant_initializer(0.0)
         self.b_i_initializer = tf.constant_initializer(0.0)
@@ -37,31 +33,33 @@ class LSTM(RNN):
         # Tensorflow initializations
         # ----------------------------------
 
-        self.init_hidden = tf.get_variable('init_hidden', [N_rec], initializer=b_f_initializer,
-                                     trainable=True)
-        self.init_cell = tf.get_variable('init_cell', [N_rec], initializer=b_f_initializer,
-                                     trainable=True)
-
-        self.W_f = tf.get_variable('W_f', [N_concat, N_rec],
-                                        initializer=W_f_initializer,
-                                        trainable=True)
-        self.W_i = tf.get_variable('W_i', [N_concat, N_rec],
-                                        initializer=W_i_initializer,
-                                        trainable=True)
-        self.W_c = tf.get_variable('W_c', [N_concat, N_rec],
-                                        initializer=W_c_initializer,
-                                        trainable=True)
-        self.W_o = tf.get_variable('W_o', [N_concat, N_rec],
-                                        initializer=W_o_initializer,
+        self.init_hidden = tf.get_variable('init_hidden', [self.N_batch, self.N_rec],
+                                           initializer=self.init_hidden_initializer,
+                                            trainable=True)
+        self.init_cell = tf.get_variable('init_cell', [self.N_batch, self.N_rec],
+                                         initializer=self.init_cell_initializer,
                                         trainable=True)
 
-        self.b_f = tf.get_variable('b_f', [N_rec], initializer=b_f_initializer,
+        self.W_f = tf.get_variable('W_f', [self.N_concat, self.N_rec],
+                                        initializer=self.W_f_initializer,
+                                        trainable=True)
+        self.W_i = tf.get_variable('W_i', [self.N_concat, self.N_rec],
+                                        initializer=self.W_i_initializer,
+                                        trainable=True)
+        self.W_c = tf.get_variable('W_c', [self.N_concat, self.N_rec],
+                                        initializer=self.W_c_initializer,
+                                        trainable=True)
+        self.W_o = tf.get_variable('W_o', [self.N_concat, self.N_rec],
+                                        initializer=self.W_o_initializer,
+                                        trainable=True)
+
+        self.b_f = tf.get_variable('b_f', [self.N_rec], initializer=self.b_f_initializer,
                                      trainable=True)
-        self.b_i = tf.get_variable('b_f', [N_rec], initializer=b_f_initializer,
+        self.b_i = tf.get_variable('b_i', [self.N_rec], initializer=self.b_i_initializer,
                                    trainable=True)
-        self.b_c = tf.get_variable('b_f', [N_rec], initializer=b_f_initializer,
+        self.b_c = tf.get_variable('b_c', [self.N_rec], initializer=self.b_c_initializer,
                                    trainable=True)
-        self.b_o = tf.get_variable('b_f', [N_rec], initializer=b_f_initializer,
+        self.b_o = tf.get_variable('b_o', [self.N_rec], initializer=self.b_o_initializer,
                                    trainable=True)
 
 
@@ -69,17 +67,17 @@ class LSTM(RNN):
 
     def recurrent_timestep(self, rnn_in, hidden, cell):
 
-        f = tf.nn.sigmoid(tf.matmul(self.W_f, tf.concat([hidden, rnn_in], 0))
-                               + b_f)
+        f = tf.nn.sigmoid(tf.matmul(tf.concat([hidden, rnn_in], 1), self.W_f)
+                               + self.b_f)
 
-        i = tf.nn.sigmoid(tf.matmul(self.W_i, tf.concat([hidden, rnn_in], 0))
-                               + b_i)
+        i = tf.nn.sigmoid(tf.matmul(tf.concat([hidden, rnn_in], 1), self.W_i)
+                               + self.b_i)
 
-        c = tf.nn.tanh(tf.matmul(self.W_c, tf.concat([hidden, rnn_in], 0))
-                               + b_c)
+        c = tf.nn.tanh(tf.matmul(tf.concat([hidden, rnn_in], 1), self.W_c)
+                               + self.b_c)
 
-        o = tf.nn.sigmoid(tf.matmul(self.W_o, tf.concat([hidden, rnn_in], 0))
-                          + b_o)
+        o = tf.nn.sigmoid(tf.matmul(tf.concat([hidden, rnn_in], 1), self.W_o)
+                          + self.b_o)
 
         new_cell = f * cell + i * c
 
@@ -92,7 +90,7 @@ class LSTM(RNN):
 
     def output_timestep(self, hidden):
 
-        output = tf.matmul(self.W_out, hidden) + self.b_out
+        output = tf.matmul(hidden, self.W_out, transpose_b=True) + self.b_out
 
         return output
 
