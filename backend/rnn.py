@@ -233,7 +233,7 @@ class RNN(object):
         # --------------------------------------------------
         batch_size = train_params.get('batch_size', 64)
         learning_rate = train_params.get('learning_rate', .001)
-        training_iters = train_params.get('training_iters', 10000)
+        training_iters = train_params.get('training_iters', 50000)
         print_epoch = train_params.get('print_epoch', 10)
         save_weights_path = train_params.get('save_weights_path', None)
         save_training_weights_epoch = train_params.get('save_training_weights_epoch', 100)
