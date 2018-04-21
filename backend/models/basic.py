@@ -74,6 +74,49 @@ class Basic(RNN):
 
 
 
+
+class Basic_sigmoid(Basic):
+
+    def recurrent_timestep(self, rnn_in, state):
+
+        if self.dale_ratio:
+            new_state = (1-self.alpha) * state \
+                        + self.alpha * (
+                            tf.matmul(
+                                tf.nn.sigmoid(state),
+                                tf.matmul(
+                                    tf.abs(self.W_rec) * self.rec_Connectivity,
+                                    self.Dale_rec, name="in_1"),
+                                transpose_b=True, name="1")
+                            + tf.matmul(
+                                rnn_in,
+                                tf.abs(self.W_in) * self.input_Connectivity,
+                                transpose_b=True, name="2")
+                            + self.b_rec)\
+                        + np.sqrt(2.0 * self.alpha * self.rec_noise * self.rec_noise)\
+                          * tf.random_normal(state.get_shape(), mean=0.0, stddev=1.0)
+
+        else:
+            new_state = ((1-self.alpha) * state) \
+                        + self.alpha * (
+                            tf.matmul(
+                                tf.nn.sigmoid(state),
+                                self.W_rec * self.rec_Connectivity,
+                                transpose_b=True, name="1")
+                            + tf.matmul(
+                                rnn_in,
+                                self.W_in * self.input_Connectivity,
+                                transpose_b=True, name="2")
+                            + self.b_rec)\
+                        + np.sqrt(2.0 * self.alpha * self.rec_noise * self.rec_noise)\
+                          * tf.random_normal(state.get_shape(), mean=0.0, stddev=1.0)
+
+        return new_state
+
+
+
+
+
 class Basic_scan(Basic):
 
     def recurrent_timestep_scan(self, state, rnn_in):
