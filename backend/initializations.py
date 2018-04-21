@@ -1,6 +1,7 @@
 import numpy as np
 import tensorflow as tf
 
+
 class WeightInitializer(object):
 
     def __init__(self, **kwargs):
@@ -113,3 +114,110 @@ class FeedForward(WeightInitializer):
             self.initializations['W_rec'][np.eye(self.N_rec) == 1] = 0
 
         return
+
+
+class StrictFeedForward(WeightInitializer):
+
+    def __init__(self, **kwargs):
+
+        super(StrictFeedForward, self).__init__(**kwargs)
+
+        self.alpha = kwargs.get('alpha')
+
+        W_rec = np.zeros([self.N_rec, self.N_rec])
+        for ii in range(self.N_rec-1):
+            W_rec[ii+1,ii] = self.alpha
+        self.initializations['W_rec'] = W_rec
+
+        if not self.autapses:
+            self.initializations['W_rec'][np.eye(self.N_rec)==1] = 0
+
+
+class ZeroMatrix(WeightInitializer):
+     '''Generate wrec of all zeros'''
+
+     def __init__(self, **kwargs):
+
+        super(ZeroMatrix, self).__init__(**kwargs)
+
+        self.initializations['W_rec'] = np.zeros([self.N_rec, self.N_rec])
+
+
+
+class BlockFeedForward(WeightInitializer):
+
+    def __init__(self, **kwargs):
+        super(BlockFeedForward, self).__init__(**kwargs)
+
+        self.spec_rad = kwargs.get('spec_rad')
+
+        W_rec = np.random.randn(self.N_rec, self.N_rec)
+        W_rec = self.spec_rad * W_rec / np.max(np.abs(np.linalg.eig(W_rec)[0]))
+        W_rec[:self.N_rec / 2, self.N_rec / 2:] = 0
+        self.initializations['W_rec'] = W_rec
+
+        input_connectivity = np.ones([self.N_rec, self.N_in])
+        input_connectivity[self.N_rec / 2:, :] = 0
+        self.initializations['input_connectivity'] = input_connectivity
+
+        rec_connectivity = np.ones([self.N_rec, self.N_rec])
+        rec_connectivity[:self.N_rec / 2, self.N_rec / 2:] = 0
+        self.initializations['rec_connectivity'] = rec_connectivity
+
+        output_connectivity = np.ones([self.N_out, self.N_rec])
+        output_connectivity[:, :self.N_rec / 2] = 0
+        self.initializations['output_connectivity'] = output_connectivity
+
+        if not self.autapses:
+            self.initializations['W_rec'][np.eye(self.N_rec) == 1] = 0
+            self.initializations['rec_connectivity'][np.eye(self.N_rec) == 1] = 0
+
+
+class FlipFlops(WeightInitializer):
+
+    def __init__(self, **kwargs):
+        super(FlipFlops, self).__init__(**kwargs)
+
+        assert np.mod(self.N_rec, 2) == 0, "N_rec must be even"
+
+        self.initializations['b_rec'] = .5 * np.ones(self.N_rec)
+
+        # flip flop circuit
+        w11 = w22 = .5
+        w12 = w21 = -2.
+        W = np.array([[w11, w12], [w21, w22]])
+
+        W_rec = np.zeros([self.N_rec, self.N_rec])
+        for ii in range(0, self.N_rec, 2):
+            W_rec[ii:ii + 2, ii:ii + 2] = W
+        self.initializations['W_rec'] = W_rec
+
+        if not self.autapses:
+            self.initializations['W_rec'][np.eye(self.N_rec) == 1] = 0
+
+
+class HalfFlipFlops(WeightInitializer):
+
+    def __init__(self, **kwargs):
+        super(HalfFlipFlops, self).__init__(**kwargs)
+
+        assert np.mod(self.N_rec, 2) == 0, "N_rec must be even"
+
+        self.initializations['b_rec'] = .5 * np.ones(self.N_rec)
+
+        # flip flop circuit
+        w11 = w22 = .5
+        w12 = w21 = -2.
+        W = np.array([[w11, w12], [w21, w22]])
+
+        W_rec = np.zeros([self.N_rec, self.N_rec])
+        for ii in range(0, self.N_rec//2, 2):
+            W_rec[ii:ii + 2, ii:ii + 2] = W
+
+        W_rec[self.N_rec // 2:, self.N_rec // 2:] = np.linalg.qr(
+                                    np.random.randn(self.N_rec // 2, self.N_rec // 2))[0]
+
+        self.initializations['W_rec'] = W_rec
+
+        if not self.autapses:
+            self.initializations['W_rec'][np.eye(self.N_rec) == 1] = 0
