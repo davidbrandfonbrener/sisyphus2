@@ -16,6 +16,9 @@ class LSTM(RNN):
         # ----------------------------------
         self.N_concat = self.N_in + self.N_rec
 
+        self.init_hidden_initializer = tf.random_normal_initializer(mean=0.1, stddev=0.01)
+        self.init_cell_initializer = tf.random_normal_initializer(mean=0.1, stddev=0.01)
+
         self.W_f_initializer = tf.constant_initializer(
                 0.1 * np.random.uniform(-1, 1, size=(self.N_concat, self.N_rec)))
         self.W_i_initializer = tf.constant_initializer(
@@ -29,6 +32,15 @@ class LSTM(RNN):
         self.b_i_initializer = tf.constant_initializer(0.0)
         self.b_c_initializer = tf.constant_initializer(0.0)
         self.b_o_initializer = tf.constant_initializer(0.0)
+
+        # ----------------------------------
+        # Tensorflow initializations
+        # ----------------------------------
+
+        self.init_hidden = tf.get_variable('init_hidden', [N_rec], initializer=b_f_initializer,
+                                     trainable=True)
+        self.init_cell = tf.get_variable('init_cell', [N_rec], initializer=b_f_initializer,
+                                     trainable=True)
 
         self.W_f = tf.get_variable('W_f', [N_concat, N_rec],
                                         initializer=W_f_initializer,
@@ -88,11 +100,12 @@ class LSTM(RNN):
 
     def forward_pass(self):
         rnn_inputs = tf.unstack(self.x, axis=1)
-        state = self.init_state
+        hidden = self.init_hidden
+        cell = self.init_cell
         rnn_outputs = []
         rnn_states = []
         for rnn_input in rnn_inputs:
-            hidden, cell = self.recurrent_timestep(rnn_input, state)
+            hidden, cell = self.recurrent_timestep(rnn_input, hidden, cell)
             output = self.output_timestep(hidden)
             rnn_outputs.append(output)
             rnn_states.append(hidden)
