@@ -9,6 +9,7 @@ from loss_functions import LossFunction
 
 class RNN(object):
     def __init__(self, params):
+        self.params = params
         # ----------------------------------
         # Network sizes (tensor dimensions)
         # ----------------------------------
@@ -79,7 +80,8 @@ class RNN(object):
             init_state_initializer = tf.random_normal_initializer(mean=0.1, stddev=0.01)
             W_in_initializer = tf.constant_initializer(
                 0.1 * np.random.uniform(-1, 1, size=(self.N_rec, self.N_in)))
-            W_rec_initializer = tf.constant_initializer(self.initial_W())
+            #TODO default initialization
+            W_rec_initializer = tf.random_normal_initializer(mean=0, stddev=0.1)
             W_out_initializer = tf.constant_initializer(
                 0.1 * np.random.uniform(-1, 1, size=(self.N_out, self.N_rec)))
             b_rec_initializer = tf.constant_initializer(0.0)
@@ -162,6 +164,9 @@ class RNN(object):
                                                        self.output_connectivity_mask),
                                                    trainable=False)
 
+
+
+    def build(self):
         # --------------------------------------------------
         # Define the predictions
         # --------------------------------------------------
@@ -170,12 +175,12 @@ class RNN(object):
         # --------------------------------------------------
         # Define the loss (based on the predictions)
         # --------------------------------------------------
-        self.loss = LossFunction(params).set_model_loss(self)
+        self.loss = LossFunction(self.params).set_model_loss(self)
 
         # --------------------------------------------------
         # Define the regularization
         # --------------------------------------------------
-        self.reg = Regularizer(params).set_model_regularization(self)
+        self.reg = Regularizer(self.params).set_model_regularization(self)
 
         # --------------------------------------------------
         # Define the total regularized loss
@@ -222,6 +227,7 @@ class RNN(object):
 
     def train(self, trial_batch_generator, train_params):
 
+        t0 = time()
         # --------------------------------------------------
         # Extract params
         # --------------------------------------------------
@@ -293,7 +299,7 @@ class RNN(object):
             # --------------------------------------------------
             if epoch % save_training_weights_epoch == 0:
                 if training_weights_path is not None:
-                    self.save(sess, training_weights_path + str(epoch)))
+                    self.save(sess, training_weights_path + str(epoch))
 
             epoch += 1
 
@@ -312,7 +318,7 @@ class RNN(object):
         # --------------------------------------------------
         sess.close()
 
-        return (t2 - t1)
+        return (t2 - t1), (t1 - t0)
 
 
 

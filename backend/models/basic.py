@@ -1,4 +1,4 @@
-from backend.rnn import RNN
+from sisyphus2.backend.rnn import RNN
 import tensorflow as tf
 
 
@@ -21,7 +21,7 @@ class Basic(RNN):
                                 tf.abs(self.W_in) * self.input_Connectivity,
                                 transpose_b=True, name="2")
                             + self.b_rec)\
-                        + np.sqrt(2.0 * self.alpha * self.rec_noise * self.rec_noise)\
+                        + tf.sqrt(2.0 * self.alpha * self.rec_noise * self.rec_noise)\
                           * tf.random_normal(state.get_shape(), mean=0.0, stddev=1.0)
 
         else:
@@ -36,7 +36,7 @@ class Basic(RNN):
                                 self.W_in * self.input_Connectivity,
                                 transpose_b=True, name="2")
                             + self.b_rec)\
-                        + np.sqrt(2.0 * self.alpha * self.rec_noise * self.rec_noise)\
+                        + tf.sqrt(2.0 * self.alpha * self.rec_noise * self.rec_noise)\
                           * tf.random_normal(state.get_shape(), mean=0.0, stddev=1.0)
 
         return new_state
@@ -93,7 +93,7 @@ class Basic_sigmoid(Basic):
                                 tf.abs(self.W_in) * self.input_Connectivity,
                                 transpose_b=True, name="2")
                             + self.b_rec)\
-                        + np.sqrt(2.0 * self.alpha * self.rec_noise * self.rec_noise)\
+                        + tf.sqrt(2.0 * self.alpha * self.rec_noise * self.rec_noise)\
                           * tf.random_normal(state.get_shape(), mean=0.0, stddev=1.0)
 
         else:
@@ -108,7 +108,7 @@ class Basic_sigmoid(Basic):
                                 self.W_in * self.input_Connectivity,
                                 transpose_b=True, name="2")
                             + self.b_rec)\
-                        + np.sqrt(2.0 * self.alpha * self.rec_noise * self.rec_noise)\
+                        + tf.sqrt(2.0 * self.alpha * self.rec_noise * self.rec_noise)\
                           * tf.random_normal(state.get_shape(), mean=0.0, stddev=1.0)
 
         return new_state
