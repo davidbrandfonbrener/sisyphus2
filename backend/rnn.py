@@ -5,7 +5,7 @@ import numpy as np
 from time import time
 from regularizations import Regularizer
 from loss_functions import LossFunction
-
+from initializations import GaussianSpectralRadius
 
 class RNN(object):
     def __init__(self, params):
@@ -77,15 +77,14 @@ class RNN(object):
         # Define initializers for trainable variables
         # ------------------------------------------------
         if self.load_weights_path is None:
-            init_state_initializer = tf.random_normal_initializer(mean=0.1, stddev=0.01)
-            W_in_initializer = tf.constant_initializer(
-                0.1 * np.random.uniform(-1, 1, size=(self.N_rec, self.N_in)))
-            #TODO default initialization
-            W_rec_initializer = tf.random_normal_initializer(mean=0, stddev=0.1)
-            W_out_initializer = tf.constant_initializer(
-                0.1 * np.random.uniform(-1, 1, size=(self.N_out, self.N_rec)))
-            b_rec_initializer = tf.constant_initializer(0.0)
-            b_out_initializer = tf.constant_initializer(0.0)
+            initializer = GaussianSpectralRadius(N_in = N_in, N_rec = N_rec, N_out = N_out,
+                                                 autapses= True, spec_rad = 1.1)
+            init_state_initializer = initializer.get('init_state')
+            W_in_initializer = initializer.get('W_in')
+            W_rec_initializer = initializer.get('W_rec')
+            W_out_initializer = initializer.get('W_out')
+            b_rec_initializer = initializer.get('b_rec')
+            b_out_initializer = initializer.get('b_out')
         else:
             print("Loading Weights")
             weights = np.load(self.load_weights_path)
