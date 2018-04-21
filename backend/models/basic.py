@@ -13,12 +13,12 @@ class Basic(RNN):
                             tf.matmul(
                                 tf.nn.relu(state),
                                 tf.matmul(
-                                    tf.abs(self.W_rec) * self.rec_Connectivity,
+                                    tf.abs(self.W_rec) * self.rec_connectivity,
                                     self.Dale_rec, name="in_1"),
                                 transpose_b=True, name="1")
                             + tf.matmul(
                                 rnn_in,
-                                tf.abs(self.W_in) * self.input_Connectivity,
+                                tf.abs(self.W_in) * self.input_connectivity,
                                 transpose_b=True, name="2")
                             + self.b_rec)\
                         + tf.sqrt(2.0 * self.alpha * self.rec_noise * self.rec_noise)\
@@ -29,11 +29,11 @@ class Basic(RNN):
                         + self.alpha * (
                             tf.matmul(
                                 tf.nn.relu(state),
-                                self.W_rec * self.rec_Connectivity,
+                                self.W_rec * self.rec_connectivity,
                                 transpose_b=True, name="1")
                             + tf.matmul(
                                 rnn_in,
-                                self.W_in * self.input_Connectivity,
+                                self.W_in * self.input_connectivity,
                                 transpose_b=True, name="2")
                             + self.b_rec)\
                         + tf.sqrt(2.0 * self.alpha * self.rec_noise * self.rec_noise)\
@@ -46,12 +46,12 @@ class Basic(RNN):
 
         if self.dale_ratio:
             output = tf.matmul(tf.nn.relu(state),
-                                    tf.matmul(tf.abs(self.W_out) * self.output_Connectivity,
+                                    tf.matmul(tf.abs(self.W_out) * self.output_connectivity,
                                             self.Dale_out, name="in_2"), transpose_b=True, name="3") \
                         + self.b_out
         else:
             output = tf.matmul(tf.nn.relu(state),
-                                self.W_out * self.output_Connectivity, transpose_b=True, name="3") \
+                                self.W_out * self.output_connectivity, transpose_b=True, name="3") \
                         + self.b_out
 
         return output
@@ -85,12 +85,12 @@ class Basic_sigmoid(Basic):
                             tf.matmul(
                                 tf.nn.sigmoid(state),
                                 tf.matmul(
-                                    tf.abs(self.W_rec) * self.rec_Connectivity,
+                                    tf.abs(self.W_rec) * self.rec_connectivity,
                                     self.Dale_rec, name="in_1"),
                                 transpose_b=True, name="1")
                             + tf.matmul(
                                 rnn_in,
-                                tf.abs(self.W_in) * self.input_Connectivity,
+                                tf.abs(self.W_in) * self.input_connectivity,
                                 transpose_b=True, name="2")
                             + self.b_rec)\
                         + tf.sqrt(2.0 * self.alpha * self.rec_noise * self.rec_noise)\
@@ -101,11 +101,11 @@ class Basic_sigmoid(Basic):
                         + self.alpha * (
                             tf.matmul(
                                 tf.nn.sigmoid(state),
-                                self.W_rec * self.rec_Connectivity,
+                                self.W_rec * self.rec_connectivity,
                                 transpose_b=True, name="1")
                             + tf.matmul(
                                 rnn_in,
-                                self.W_in * self.input_Connectivity,
+                                self.W_in * self.input_connectivity,
                                 transpose_b=True, name="2")
                             + self.b_rec)\
                         + tf.sqrt(2.0 * self.alpha * self.rec_noise * self.rec_noise)\

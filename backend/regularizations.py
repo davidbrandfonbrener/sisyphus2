@@ -52,13 +52,13 @@ class Regularizer(object):
 
         reg = 0
 
-        reg += self.L1_in * tf.reduce_mean(tf.abs(model.W_in) * model.input_Connectivity)
-        reg += self.L1_rec * tf.reduce_mean(tf.abs(model.W_rec) * model.rec_Connectivity)
+        reg += self.L1_in * tf.reduce_mean(tf.abs(model.W_in) * model.input_connectivity)
+        reg += self.L1_rec * tf.reduce_mean(tf.abs(model.W_rec) * model.rec_connectivity)
         if model.dale_ratio:
             reg += self.L1_out * tf.reduce_mean(
-                tf.matmul(tf.abs(model.W_out) * model.output_Connectivity, model.Dale_out))
+                tf.matmul(tf.abs(model.W_out) * model.output_connectivity, model.Dale_out))
         else:
-            reg += self.L1_out * tf.reduce_mean(tf.abs(model.W_out) * model.output_Connectivity)
+            reg += self.L1_out * tf.reduce_mean(tf.abs(model.W_out) * model.output_connectivity)
 
         return reg
 
@@ -69,13 +69,13 @@ class Regularizer(object):
 
         reg = 0
 
-        reg += self.L2_in * tf.reduce_mean(tf.square(tf.abs(model.W_in) * model.input_Connectivity))
-        reg += self.L2_rec * tf.reduce_mean(tf.square(tf.abs(model.W_rec) * model.rec_Connectivity))
+        reg += self.L2_in * tf.reduce_mean(tf.square(tf.abs(model.W_in) * model.input_connectivity))
+        reg += self.L2_rec * tf.reduce_mean(tf.square(tf.abs(model.W_rec) * model.rec_connectivity))
         if model.dale_ratio:
             reg += model.L2_out * tf.reduce_mean(tf.square(
-                tf.matmul(tf.abs(model.W_out) * model.output_Connectivity, model.Dale_out)))
+                tf.matmul(tf.abs(model.W_out) * model.output_connectivity, model.Dale_out)))
         else:
-            reg += self.L2_out * tf.reduce_mean(tf.square(tf.abs(model.W_out) * model.output_Connectivity))
+            reg += self.L2_out * tf.reduce_mean(tf.square(tf.abs(model.W_out) * model.output_connectivity))
 
         return reg
 
@@ -99,7 +99,7 @@ class Regularizer(object):
 
         for state in states:
             dJr = tf.matmul(tf.nn.relu(state),
-                            tf.matmul(tf.abs(model.W_rec) * model.rec_Connectivity, model.Dale_rec))
+                            tf.matmul(tf.abs(model.W_rec) * model.rec_connectivity, model.Dale_rec))
             reg += tf.reduce_sum(tf.square(dJr))
 
         return self.sussillo_constant * (reg / (model.N_steps * model.N_batch))

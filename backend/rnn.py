@@ -5,7 +5,7 @@ import numpy as np
 from time import time
 from regularizations import Regularizer
 from loss_functions import LossFunction
-from initializations import GaussianSpectralRadius
+from initializations import WeightInitializer, GaussianSpectralRadius
 
 class RNN(object):
     def __init__(self, params):
@@ -47,16 +47,6 @@ class RNN(object):
             self.dale_out = np.diag(dale_vec)
 
         # ----------------------------------
-        # Connectivity masking
-        # ----------------------------------
-        self.input_connectivity_mask = params.get('input_connectivity_mask',
-                                                  np.ones((N_rec, N_in)))
-        self.recurrent_connectivity_mask = params.get('recurrent_connectivity_mask',
-                                                      np.ones((N_rec, N_rec)))
-        self.output_connectivity_mask = params.get('output_connectivity_mask',
-                                                   np.ones((N_out, N_rec)))
-
-        # ----------------------------------
         # Trainable features
         # ----------------------------------
         self.W_in_train = params.get('W_in_train', True)
@@ -66,38 +56,24 @@ class RNN(object):
         self.b_out_train = params.get('b_out_train', True)
         self.init_state_train = params.get('init_state_train', True)
 
-        # ----------------------------------
+        # ---------------------------------------
         # Tensorflow input/output initializations
-        # ----------------------------------
+        # ----------------------------------------
         self.x = tf.placeholder("float", [N_batch, N_steps, N_in])
         self.y = tf.placeholder("float", [N_batch, N_steps, N_out])
         self.output_mask = tf.placeholder("float", [N_batch, N_steps, N_out])
 
         # ------------------------------------------------
-        # Define initializers for trainable variables
+        # Define initializer for TensorFlow variables
         # ------------------------------------------------
-        if self.load_weights_path is None:
-            initializer = GaussianSpectralRadius(N_in = N_in, N_rec = N_rec, N_out = N_out,
-                                                 autapses= True, spec_rad = 1.1)
-            init_state_initializer = initializer.get('init_state')
-            W_in_initializer = initializer.get('W_in')
-            W_rec_initializer = initializer.get('W_rec')
-            W_out_initializer = initializer.get('W_out')
-            b_rec_initializer = initializer.get('b_rec')
-            b_out_initializer = initializer.get('b_out')
+        if self.load_weights_path is not None:
+            self.initializer = WeightInitializer(load_weights_path=self.load_weights_path)
         else:
-            print("Loading Weights")
-            weights = np.load(self.load_weights_path)
-            init_state_initializer = tf.constant_initializer(weights['init_state'])
-            W_in_initializer = tf.constant_initializer(weights['W_in'])
-            W_rec_initializer = tf.constant_initializer(weights['W_rec'])
-            W_out_initializer = tf.constant_initializer(weights['W_out'])
-            b_rec_initializer = tf.constant_initializer(weights['b_rec'])
-            b_out_initializer = tf.constant_initializer(weights['b_out'])
+            self.initializer = params.get('initializer',
+                                          GaussianSpectralRadius(N_in=N_in,
+                                                                 N_rec=N_rec, N_out=N_out,
+                                                                 autapses=True, spec_rad=1.1))
 
-            self.input_connectivity_mask = weights['input_Connectivity']
-            self.recurrent_connectivity_mask = weights['rec_Connectivity']
-            self.output_connectivity_mask = weights['output_Connectivity']
 
         # ------------------------------------------------
         # Trainable variables:
@@ -105,13 +81,13 @@ class RNN(object):
         # ------------------------------------------------
 
         self.init_state = tf.get_variable('init_state', [N_batch, N_rec],
-                                          initializer=init_state_initializer,
+                                          initializer=self.initializer.get('init_state'),
                                           trainable=self.init_state_train)
 
         # Input weight matrix:
         self.W_in = \
             tf.get_variable('W_in', [N_rec, N_in],
-                            initializer=W_in_initializer,
+                            initializer=self.initializer.get('W_in'),
                             trainable=self.W_in_train)
 
         # Recurrent weight matrix:
@@ -119,19 +95,19 @@ class RNN(object):
             tf.get_variable(
                 'W_rec',
                 [N_rec, N_rec],
-                initializer=W_rec_initializer,
+                initializer=self.initializer.get('W_rec'),
                 trainable=self.W_rec_train)
 
         # Output weight matrix:
         self.W_out = tf.get_variable('W_out', [N_out, N_rec],
-                                     initializer=W_out_initializer,
+                                     initializer=self.initializer.get('W_out'),
                                      trainable=self.W_out_train)
 
         # Recurrent bias:
-        self.b_rec = tf.get_variable('b_rec', [N_rec], initializer=b_rec_initializer,
+        self.b_rec = tf.get_variable('b_rec', [N_rec], initializer=self.initializer.get('b_rec'),
                                      trainable=self.b_rec_train)
         # Output bias:
-        self.b_out = tf.get_variable('b_out', [N_out], initializer=b_out_initializer,
+        self.b_out = tf.get_variable('b_out', [N_out], initializer=self.initializer.get('b_out'),
                                      trainable=self.b_out_train)
 
         # ------------------------------------------------
@@ -150,17 +126,14 @@ class RNN(object):
                                         trainable=False)
 
         # Connectivity weight matrices:
-        self.input_Connectivity = tf.get_variable('input_Connectivity', [N_rec, N_in],
-                                                  initializer=tf.constant_initializer(
-                                                      self.input_connectivity_mask),
+        self.input_connectivity = tf.get_variable('input_connectivity', [N_rec, N_in],
+                                                  initializer=self.initializer.get('input_connectivity'),
                                                   trainable=False)
-        self.rec_Connectivity = tf.get_variable('rec_Connectivity', [N_rec, N_rec],
-                                                initializer=tf.constant_initializer(
-                                                    self.recurrent_connectivity_mask),
+        self.rec_connectivity = tf.get_variable('rec_connectivity', [N_rec, N_rec],
+                                                initializer=self.initializer.get('rec_connectivity'),
                                                 trainable=False)
-        self.output_Connectivity = tf.get_variable('output_Connectivity', [N_out, N_rec],
-                                                   initializer=tf.constant_initializer(
-                                                       self.output_connectivity_mask),
+        self.output_connectivity = tf.get_variable('output_connectivity', [N_out, N_rec],
+                                                   initializer=self.initializer.get('output_connectivity'),
                                                    trainable=False)
 
 
