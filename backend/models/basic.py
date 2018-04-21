@@ -64,8 +64,8 @@ class Basic(RNN):
         rnn_outputs = []
         rnn_states = []
         for rnn_input in rnn_inputs:
-            state = self.rnn_step(rnn_input, state)
-            output = self.rnn_output(state)
+            state = self.recurrent_timestep(rnn_input, state)
+            output = self.output_timestep(state)
             rnn_outputs.append(output)
             rnn_states.append(state)
         return tf.transpose(rnn_outputs, [1, 0, 2]), rnn_states
