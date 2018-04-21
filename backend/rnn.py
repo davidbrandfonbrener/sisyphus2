@@ -29,11 +29,6 @@ class RNN(object):
         self.rec_noise = params['rec_noise']
 
         # ----------------------------------
-        # Load weights path
-        # ----------------------------------
-        self.load_weights_path = params.get('load_weights_path', None)
-
-        # ----------------------------------
         # Dale's law matrix
         # ----------------------------------
         dale_vec = np.ones(N_rec)
@@ -56,12 +51,10 @@ class RNN(object):
         self.b_out_train = params.get('b_out_train', True)
         self.init_state_train = params.get('init_state_train', True)
 
-        # ---------------------------------------
-        # Tensorflow input/output initializations
-        # ----------------------------------------
-        self.x = tf.placeholder("float", [N_batch, N_steps, N_in])
-        self.y = tf.placeholder("float", [N_batch, N_steps, N_out])
-        self.output_mask = tf.placeholder("float", [N_batch, N_steps, N_out])
+        # ----------------------------------
+        # Load weights path
+        # ----------------------------------
+        self.load_weights_path = params.get('load_weights_path', None)
 
         # ------------------------------------------------
         # Define initializer for TensorFlow variables
@@ -136,6 +129,12 @@ class RNN(object):
                                                    initializer=self.initializer.get('output_connectivity'),
                                                    trainable=False)
 
+        # --------------------------------------------------
+        # Tensorflow input/output placeholder initializations
+        # ---------------------------------------------------
+        self.x = tf.placeholder("float", [N_batch, N_steps, N_in])
+        self.y = tf.placeholder("float", [N_batch, N_steps, N_out])
+        self.output_mask = tf.placeholder("float", [N_batch, N_steps, N_out])
 
 
     def build(self):

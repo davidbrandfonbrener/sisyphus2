@@ -9,18 +9,18 @@ class WeightInitializer(object):
         # Required parameters
         # ----------------------------------
         self.load_weights_path = kwargs.get('load_weights_path', None)
-        self.N_in = kwargs.get('N_in')
-        self.N_rec = kwargs.get('N_rec')
-        self.N_out = kwargs.get('N_out')
+        N_in = self.N_in = kwargs.get('N_in')
+        N_rec = self.N_rec = kwargs.get('N_rec')
+        N_out = self.N_out = kwargs.get('N_out')
         self.autapses = kwargs.get('autapses')
 
         self.initializations = dict()
 
-        if load_weights_path is not None:
+        if self.load_weights_path is not None:
             # ----------------------------------
             # Load saved weights
             # ----------------------------------
-            self.initializations = np.load(load_weights_path)
+            self.initializations = np.load(self.load_weights_path)
         else:
             # ----------------------------------
             # Default initializations
@@ -39,7 +39,7 @@ class WeightInitializer(object):
             self.initializations['rec_connectivity'] = np.ones([N_rec, N_rec])
             self.initializations['output_connectivity'] = np.ones([N_out, N_rec])
 
-            if not autapses:
+            if not self.autapses:
                 self.initializations['W_rec'][np.eye(N_rec) == 1] = 0
                 self.initializations['rec_connectivity'][np.eye(N_rec) == 1] = 0
 
@@ -67,15 +67,15 @@ class GaussianSpectralRadius(WeightInitializer):
 
     def __init__(self, **kwargs):
 
-        super(WeightInitializer, self).__init__(**kwargs)
+        super(GaussianSpectralRadius, self).__init__(**kwargs)
 
         self.spec_rad = kwargs.get('spec_rad')
 
-        W_rec = np.random.randn(N_rec, N_rec)
+        W_rec = np.random.randn(self.N_rec, self.N_rec)
         self.initializations['W_rec'] = self.spec_rad * W_rec / np.max(np.abs(np.linalg.eig(W_rec)[0]))
 
         if not self.autapses:
-            self.initializations['W_rec'][np.eye(N_rec) == 1] = 0
+            self.initializations['W_rec'][np.eye(self.N_rec) == 1] = 0
 
         return
 
@@ -86,14 +86,14 @@ class AlphaIdentity(WeightInitializer):
 
     def __init__(self, **kwargs):
 
-        super(WeightInitializer, self).__init__(**kwargs)
+        super(AlphaIdentity, self).__init__(**kwargs)
 
         self.alpha = kwargs.get('alpha')
 
-        self.initializations['W_rec'] = np.eye(N_rec) * self.alpha
+        self.initializations['W_rec'] = np.eye(self.N_rec) * self.alpha
 
         if not self.autapses:
-            self.initializations['W_rec'][np.eye(N_rec) == 1] = 0
+            self.initializations['W_rec'][np.eye(self.N_rec) == 1] = 0
 
         return
 
@@ -103,13 +103,13 @@ class FeedForward(WeightInitializer):
 
     def __init__(self, **kwargs):
 
-        super(WeightInitializer, self).__init__(**kwargs)
+        super(FeedForward, self).__init__(**kwargs)
 
         self.sigma = kwargs.get('sigma')
 
-        self.initializations['W_rec'] = np.tril(self.sigma * np.random.randn(N_rec, N_rec), -1)
+        self.initializations['W_rec'] = np.tril(self.sigma * np.random.randn(self.N_rec, self.N_rec), -1)
 
         if not self.autapses:
-            self.initializations['W_rec'][np.eye(N_rec) == 1] = 0
+            self.initializations['W_rec'][np.eye(self.N_rec) == 1] = 0
 
         return
