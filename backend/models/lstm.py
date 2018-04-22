@@ -108,4 +108,4 @@ class LSTM(RNN):
             rnn_outputs.append(output)
             rnn_states.append(hidden)
 
-        return tf.transpose(rnn_outputs, [1, 0, 2]), rnn_states
+        return tf.transpose(rnn_outputs, [1, 0, 2]), tf.transpose(rnn_states, [1, 0, 2])

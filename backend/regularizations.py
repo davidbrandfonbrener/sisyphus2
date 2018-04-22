@@ -93,7 +93,7 @@ class Regularizer(object):
 
 
     def sussillo_reg(self, model):
-        states = model.states
+        states = tf.unstack(tf.transpose(model.states, [1, 0, 2]))
 
         reg = 0
 

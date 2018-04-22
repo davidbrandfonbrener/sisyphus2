@@ -68,7 +68,7 @@ class Basic(RNN):
             output = self.output_timestep(state)
             rnn_outputs.append(output)
             rnn_states.append(state)
-        return tf.transpose(rnn_outputs, [1, 0, 2]), rnn_states
+        return tf.transpose(rnn_outputs, [1, 0, 2]), tf.transpose(rnn_states, [1, 0, 2])
 
 
 
@@ -140,4 +140,4 @@ class Basic_scan(Basic):
                 rnn_states,
                 initializer=tf.zeros([self.N_batch, self.N_out]),
                 parallel_iterations=1)
-        return tf.transpose(rnn_outputs, [1, 0, 2]), tf.unstack(rnn_states)
+        return tf.transpose(rnn_outputs, [1, 0, 2]), tf.transpose(rnn_states, [1, 0, 2])

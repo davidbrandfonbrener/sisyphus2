@@ -31,7 +31,8 @@ class LossFunction(object):
 
 
     def binary_cross_entropy(self, predictions, y, output_mask):
-        return tf.reduce_mean( output_mask * -(y * log(p) + (1 - y) * log(1 - p)))
+        return tf.reduce_mean( output_mask *
+                               -(y * tf.log(predictions) + (1 - y) * tf.log(1 - predictions)))
 
 
 
