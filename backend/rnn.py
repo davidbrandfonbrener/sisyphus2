@@ -294,3 +294,28 @@ class RNN(object):
 
 
 
+    def test_batch(self, trial_batch, load_weights_path):
+
+        # --------------------------------------------------
+        # Load the saved weights
+        # --------------------------------------------------
+        self.initializer = WeightInitializer(load_weights_path=load_weights_path)
+
+        # --------------------------------------------------
+        # Open session
+        # --------------------------------------------------
+        sess = tf.Session()
+        sess.run(tf.global_variables_initializer())
+
+        # --------------------------------------------------
+        # Run the forward pass on trial_batch
+        # --------------------------------------------------
+        outputs, states = sess.run([self.predictions, self.states],
+                 feed_dict={self.x: trial_batch})
+
+        # --------------------------------------------------
+        # Close session and return
+        # --------------------------------------------------
+        sess.close()
+        return outputs, states
+
