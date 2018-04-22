@@ -294,12 +294,7 @@ class RNN(object):
 
 
 
-    def test_batch(self, trial_batch, load_weights_path):
-
-        # --------------------------------------------------
-        # Load the saved weights
-        # --------------------------------------------------
-        self.initializer = WeightInitializer(load_weights_path=load_weights_path)
+    def test_batch(self, trial_batch):
 
         # --------------------------------------------------
         # Open session
