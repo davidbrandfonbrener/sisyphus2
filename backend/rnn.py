@@ -67,7 +67,6 @@ class RNN(object):
                                                                  N_rec=N_rec, N_out=N_out,
                                                                  autapses=True, spec_rad=1.1))
 
-
         # ------------------------------------------------
         # Trainable variables:
         # Initial State, weight matrices and biases
@@ -158,6 +157,21 @@ class RNN(object):
         # --------------------------------------------------
         self.reg_loss = self.loss + self.reg
 
+        # --------------------------------------------------
+        # Open a session
+        # --------------------------------------------------
+        self.sess = tf.Session()
+
+        return
+
+
+    def destruct(self):
+        # --------------------------------------------------
+        # Close the session. Delete the graph.
+        # --------------------------------------------------
+        self.sess.close()
+        tf.reset_default_graph()
+        return
 
 
 
@@ -181,7 +195,7 @@ class RNN(object):
 
 
 
-    def save(self, sess, save_path):
+    def save(self, save_path):
 
         weights_dict = dict()
 
@@ -189,7 +203,7 @@ class RNN(object):
             # avoid saving duplicates
             if var.name.endswith(':0'):
                 name = var.name[:-2]
-                weights_dict.update( {name: var.eval(session = sess)} )
+                weights_dict.update( {name: var.eval(session = self.sess)} )
 
         np.savez(save_path, **weights_dict)
 
@@ -215,11 +229,6 @@ class RNN(object):
         clip_grads = train_params.get('clip_grads', True)
 
         # --------------------------------------------------
-        # open a session
-        # --------------------------------------------------
-        sess = tf.Session()
-
-        # --------------------------------------------------
         # Compute gradients
         # --------------------------------------------------
         grads = optimizer.compute_gradients(self.reg_loss)
@@ -236,8 +245,8 @@ class RNN(object):
         # Call the optimizer and initialize session
         # --------------------------------------------------
         optimize = optimizer.apply_gradients(grads)
-        sess.run(tf.global_variables_initializer())
         epoch = 1
+        self.sess.run(tf.global_variables_initializer())
 
         # --------------------------------------------------
         # Record training time for performance benchmarks
@@ -249,12 +258,12 @@ class RNN(object):
         # --------------------------------------------------
         while epoch * batch_size < training_iters:
             batch_x, batch_y, output_mask = trial_batch_generator.next()
-            sess.run(optimize, feed_dict={self.x: batch_x, self.y: batch_y, self.output_mask: output_mask})
+            self.sess.run(optimize, feed_dict={self.x: batch_x, self.y: batch_y, self.output_mask: output_mask})
             # --------------------------------------------------
             # Output batch loss
             # --------------------------------------------------
             if epoch % print_epoch == 0:
-                reg_loss = sess.run(self.reg_loss,
+                reg_loss = self.sess.run(self.reg_loss,
                                 feed_dict={self.x: batch_x, self.y: batch_y, self.output_mask: output_mask})
                 print("Iter " + str(epoch * batch_size) + ", Minibatch Loss= " + \
                       "{:.6f}".format(reg_loss))
@@ -270,7 +279,7 @@ class RNN(object):
             # --------------------------------------------------
             if epoch % save_training_weights_epoch == 0:
                 if training_weights_path is not None:
-                    self.save(sess, training_weights_path + str(epoch))
+                    self.save(training_weights_path + str(epoch))
 
             epoch += 1
 
@@ -281,13 +290,9 @@ class RNN(object):
         # Save final weights
         # --------------------------------------------------
         if save_weights_path is not None:
-            self.save(sess, save_weights_path)
+            self.save(save_weights_path)
             print("Model saved in file: %s" % save_weights_path)
 
-        # --------------------------------------------------
-        # Close session
-        # --------------------------------------------------
-        sess.close()
 
         return (t2 - t1), (t1 - t0)
 
@@ -296,21 +301,12 @@ class RNN(object):
 
     def test_batch(self, trial_batch):
 
-        # --------------------------------------------------
-        # Open session
-        # --------------------------------------------------
-        sess = tf.Session()
-        sess.run(tf.global_variables_initializer())
+        self.sess.run(tf.global_variables_initializer())
 
         # --------------------------------------------------
         # Run the forward pass on trial_batch
         # --------------------------------------------------
-        outputs, states = sess.run([self.predictions, self.states],
-                 feed_dict={self.x: trial_batch})
+        outputs, states = self.sess.run([self.predictions, self.states],
+                                        feed_dict={self.x: trial_batch})
 
-        # --------------------------------------------------
-        # Close session and return
-        # --------------------------------------------------
-        sess.close()
         return outputs, states
-
