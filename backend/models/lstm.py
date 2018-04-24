@@ -24,10 +24,10 @@ class LSTM(RNN):
         self.W_c_initializer = tf.random_normal_initializer(mean=0, stddev=0.1)
         self.W_o_initializer = tf.random_normal_initializer(mean=0, stddev=0.1)
 
-        self.b_f_initializer = tf.constant_initializer(0.0)
-        self.b_i_initializer = tf.constant_initializer(0.0)
-        self.b_c_initializer = tf.constant_initializer(0.0)
-        self.b_o_initializer = tf.constant_initializer(0.0)
+        self.b_f_initializer = tf.constant_initializer(1.0)
+        self.b_i_initializer = tf.constant_initializer(1.0)
+        self.b_c_initializer = tf.constant_initializer(1.0)
+        self.b_o_initializer = tf.constant_initializer(1.0)
 
         # ----------------------------------
         # Tensorflow initializations
