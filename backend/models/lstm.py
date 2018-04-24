@@ -16,8 +16,8 @@ class LSTM(RNN):
         # ----------------------------------
         self.N_concat = self.N_in + self.N_rec
 
-        self.init_hidden_initializer = tf.random_normal_initializer(mean=0.1, stddev=0.01)
-        self.init_cell_initializer = tf.random_normal_initializer(mean=0.1, stddev=0.01)
+        self.init_hidden_initializer = tf.random_normal_initializer(mean=0, stddev=0.1)
+        self.init_cell_initializer = tf.random_normal_initializer(mean=0, stddev=0.1)
 
         self.W_f_initializer = tf.random_normal_initializer(mean=0, stddev=0.1)
         self.W_i_initializer = tf.random_normal_initializer(mean=0, stddev=0.1)
