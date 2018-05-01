@@ -1,5 +1,5 @@
 import numpy as np
-from backend.simulation_tools import Simulator
+from backend.simulation import Simulator
 import flip_flop
 import matplotlib.pyplot as plt
 

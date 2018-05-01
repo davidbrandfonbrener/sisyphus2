@@ -8,7 +8,7 @@ import tensorflow as tf
 from backend.networks import Model
 #import backend.visualizations as V
 from backend.weight_initializer import WeightInitializer
-from backend.simulation_tools import Simulator
+from backend.simulation import Simulator
 
 # Builds a dictionary of parameters that specifies the information
 # about an instance of this specific task
