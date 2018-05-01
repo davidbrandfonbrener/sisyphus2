@@ -22,7 +22,7 @@ class Basic(RNN):
                                 transpose_b=True, name="2")
                             + self.b_rec)\
                         + tf.sqrt(2.0 * self.alpha * self.rec_noise * self.rec_noise)\
-                          * tf.random_normal(state.get_shape(), mean=0.0, stddev=1.0)
+                          * tf.random_normal(tf.shape(state), mean=0.0, stddev=1.0)
 
         else:
             new_state = ((1-self.alpha) * state) \
@@ -37,7 +37,7 @@ class Basic(RNN):
                                 transpose_b=True, name="2")
                             + self.b_rec)\
                         + tf.sqrt(2.0 * self.alpha * self.rec_noise * self.rec_noise)\
-                          * tf.random_normal(state.get_shape(), mean=0.0, stddev=1.0)
+                          * tf.random_normal(tf.shape(state), mean=0.0, stddev=1.0)
 
         return new_state
 
@@ -96,7 +96,7 @@ class Basic_sigmoid(Basic):
                                 transpose_b=True, name="2")
                             + self.b_rec)\
                         + tf.sqrt(2.0 * self.alpha * self.rec_noise * self.rec_noise)\
-                          * tf.random_normal(state.get_shape(), mean=0.0, stddev=1.0)
+                          * tf.random_normal(tf.shape(state), mean=0.0, stddev=1.0)
 
         else:
             new_state = ((1-self.alpha) * state) \
@@ -111,7 +111,7 @@ class Basic_sigmoid(Basic):
                                 transpose_b=True, name="2")
                             + self.b_rec)\
                         + tf.sqrt(2.0 * self.alpha * self.rec_noise * self.rec_noise)\
-                          * tf.random_normal(state.get_shape(), mean=0.0, stddev=1.0)
+                          * tf.random_normal(tf.shape(state), mean=0.0, stddev=1.0)
 
         return new_state
 

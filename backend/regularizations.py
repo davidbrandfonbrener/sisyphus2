@@ -100,6 +100,6 @@ class Regularizer(object):
         for state in states:
             dJr = tf.matmul(tf.nn.relu(state),
                             tf.matmul(tf.abs(model.W_rec) * model.rec_connectivity, model.Dale_rec))
-            reg += tf.reduce_sum(tf.square(dJr))
+            reg += tf.reduce_mean(tf.square(dJr))
 
-        return self.sussillo_constant * (reg / (model.N_steps * model.N_batch))
+        return self.sussillo_constant * (reg)

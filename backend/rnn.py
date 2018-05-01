@@ -17,7 +17,7 @@ class RNN(object):
         N_rec = self.N_rec = params['N_rec']
         N_out = self.N_out = params['N_out']
         N_steps = self.N_steps = params['N_steps']
-        N_batch = self.N_batch = params['N_batch']
+        #N_batch = self.N_batch = params['N_batch']
 
         # ----------------------------------
         # Physical parameters
@@ -67,14 +67,23 @@ class RNN(object):
                                                                  N_rec=N_rec, N_out=N_out,
                                                                  autapses=True, spec_rad=1.1))
 
+        # --------------------------------------------------
+        # Tensorflow input/output placeholder initializations
+        # ---------------------------------------------------
+        self.x = tf.placeholder("float", [None, N_steps, N_in])
+        self.y = tf.placeholder("float", [None, N_steps, N_out])
+        self.output_mask = tf.placeholder("float", [None, N_steps, N_out])
+        self.N_batch = tf.shape(self.x)[0]
+
         # ------------------------------------------------
         # Trainable variables:
         # Initial State, weight matrices and biases
         # ------------------------------------------------
 
-        self.init_state = tf.get_variable('init_state', [N_batch, N_rec],
+        self.init_state = tf.get_variable('init_state', [1, N_rec],
                                           initializer=self.initializer.get('init_state'),
                                           trainable=self.init_state_train)
+        self.init_state = tf.tile(self.init_state, [self.N_batch, 1])
 
         # Input weight matrix:
         self.W_in = \
@@ -127,13 +136,6 @@ class RNN(object):
         self.output_connectivity = tf.get_variable('output_connectivity', [N_out, N_rec],
                                                    initializer=self.initializer.get('output_connectivity'),
                                                    trainable=False)
-
-        # --------------------------------------------------
-        # Tensorflow input/output placeholder initializations
-        # ---------------------------------------------------
-        self.x = tf.placeholder("float", [N_batch, N_steps, N_in])
-        self.y = tf.placeholder("float", [N_batch, N_steps, N_out])
-        self.output_mask = tf.placeholder("float", [N_batch, N_steps, N_out])
 
         # --------------------------------------------------
         # Flag to check if variables initialized, model built
@@ -322,7 +324,7 @@ class RNN(object):
 
 
 
-    def test_batch(self, trial_batch):
+    def test(self, trial_batch):
 
         if not self.is_initialized:
             self.sess.run(tf.global_variables_initializer())
