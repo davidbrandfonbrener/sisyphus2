@@ -232,7 +232,8 @@ class RNN(object):
         batch_size = train_params.get('batch_size', 64)
         learning_rate = train_params.get('learning_rate', .001)
         training_iters = train_params.get('training_iters', 50000)
-        print_epoch = train_params.get('print_epoch', 10)
+        loss_epoch = train_params.get('loss_epoch', 10)
+        verbosity = train_params.get('verbosity', True)
         save_weights_path = train_params.get('save_weights_path', None)
         save_training_weights_epoch = train_params.get('save_training_weights_epoch', 100)
         training_weights_path = train_params.get('training_weights_path', None)
@@ -270,6 +271,7 @@ class RNN(object):
         # Training loop
         # --------------------------------------------------
         epoch = 1
+        losses = []
 
         while epoch * batch_size < training_iters:
             batch_x, batch_y, output_mask = trial_batch_generator.next()
@@ -277,11 +279,13 @@ class RNN(object):
             # --------------------------------------------------
             # Output batch loss
             # --------------------------------------------------
-            if epoch % print_epoch == 0:
+            if epoch % loss_epoch == 0:
                 reg_loss = self.sess.run(self.reg_loss,
                                 feed_dict={self.x: batch_x, self.y: batch_y, self.output_mask: output_mask})
-                print("Iter " + str(epoch * batch_size) + ", Minibatch Loss= " + \
-                      "{:.6f}".format(reg_loss))
+                losses.append(reg_loss)
+                if verbosity:
+                    print("Iter " + str(epoch * batch_size) + ", Minibatch Loss= " + \
+                          "{:.6f}".format(reg_loss))
 
                 # --------------------------------------------------
                 # Allow for curriculum learning
@@ -299,17 +303,21 @@ class RNN(object):
             epoch += 1
 
         t2 = time()
-        print("Optimization finished!")
+        if verbosity:
+            print("Optimization finished!")
 
         # --------------------------------------------------
         # Save final weights
         # --------------------------------------------------
         if save_weights_path is not None:
             self.save(save_weights_path)
-            print("Model saved in file: %s" % save_weights_path)
+            if verbosity:
+                print("Model saved in file: %s" % save_weights_path)
 
-
-        return (t2 - t1), (t1 - t0)
+        # --------------------------------------------------
+        # Return losses, training time, initialization time
+        # --------------------------------------------------
+        return losses, (t2 - t1), (t1 - t0)
 
 
 
