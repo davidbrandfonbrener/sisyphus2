@@ -77,7 +77,7 @@ class Basic(RNN):
 
 
 
-class Basic_sigmoid(Basic):
+class BasicSigmoid(Basic):
 
     def recurrent_timestep(self, rnn_in, state):
 
@@ -119,7 +119,7 @@ class Basic_sigmoid(Basic):
 
 
 
-class Basic_scan(Basic):
+class BasicScan(Basic):
 
     def recurrent_timestep_scan(self, state, rnn_in):
         return self.recurrent_timestep(rnn_in, state)
