@@ -135,6 +135,13 @@ class RNN(object):
         self.y = tf.placeholder("float", [N_batch, N_steps, N_out])
         self.output_mask = tf.placeholder("float", [N_batch, N_steps, N_out])
 
+        # --------------------------------------------------
+        # Flag to check if variables initialized, model built
+        # ---------------------------------------------------
+        self.is_initialized = False
+        self.is_built = False
+
+
 
     def build(self):
         # --------------------------------------------------
@@ -162,6 +169,11 @@ class RNN(object):
         # --------------------------------------------------
         self.sess = tf.Session()
 
+        # --------------------------------------------------
+        # Record successful build
+        # --------------------------------------------------
+        self.is_built = True
+
         return
 
 
@@ -169,7 +181,8 @@ class RNN(object):
         # --------------------------------------------------
         # Close the session. Delete the graph.
         # --------------------------------------------------
-        self.sess.close()
+        if self.is_built:
+            self.sess.close()
         tf.reset_default_graph()
         return
 
@@ -238,15 +251,15 @@ class RNN(object):
         # --------------------------------------------------
         if clip_grads:
             grads = [(tf.clip_by_norm(grad, 1.0), var)
-                                if grad is not None else (grad, var)
-                                for grad, var in grads]
+                     if grad is not None else (grad, var)
+                     for grad, var in grads]
 
         # --------------------------------------------------
-        # Call the optimizer and initialize session
+        # Call the optimizer and initialize variables
         # --------------------------------------------------
         optimize = optimizer.apply_gradients(grads)
-        epoch = 1
         self.sess.run(tf.global_variables_initializer())
+        self.is_initialized = True
 
         # --------------------------------------------------
         # Record training time for performance benchmarks
@@ -256,6 +269,8 @@ class RNN(object):
         # --------------------------------------------------
         # Training loop
         # --------------------------------------------------
+        epoch = 1
+
         while epoch * batch_size < training_iters:
             batch_x, batch_y, output_mask = trial_batch_generator.next()
             self.sess.run(optimize, feed_dict={self.x: batch_x, self.y: batch_y, self.output_mask: output_mask})
@@ -301,7 +316,8 @@ class RNN(object):
 
     def test_batch(self, trial_batch):
 
-        self.sess.run(tf.global_variables_initializer())
+        if not self.is_initialized:
+            self.sess.run(tf.global_variables_initializer())
 
         # --------------------------------------------------
         # Run the forward pass on trial_batch
