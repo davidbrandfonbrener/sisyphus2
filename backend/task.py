@@ -4,6 +4,9 @@ import numpy as np
 class Task(object):
     def __init__(self, N_in, N_out, dt, tau, T, N_batch):
 
+        # ----------------------------------
+        # Initialize required parameters
+        # ----------------------------------
         self.N_batch = N_batch
         self.N_in = N_in
         self.N_out = N_out
@@ -11,19 +14,23 @@ class Task(object):
         self.tau = tau
         self.T = T
 
-        self.alpha = self.dt / self.tau
+        # ----------------------------------
+        # Calculate implied parameters
+        # ----------------------------------
+        self.alpha = (1.0 * self.dt) / self.tau
         self.N_steps = int(np.ceil(self.T / self.dt))
 
-    # return params for a given batch
     def trial_params_function(self, batch, trial):
             pass
 
-    # return input, output, mask, at time t
     def trial_function(self, time, params):
         pass
 
     def __generate_trial__(self, params):
 
+        # ----------------------------------
+        # Loop to generate a single trial
+        # ----------------------------------
         x_data = np.zeros([self.N_steps, self.N_in])
         y_data = np.zeros([self.N_steps, self.N_out])
         mask = np.zeros([self.N_steps, self.N_out])
@@ -40,7 +47,13 @@ class Task(object):
             x_data = []
             y_data = []
             mask = []
+            # ----------------------------------
+            # Loop over trials in batch
+            # ----------------------------------
             for trial in range(self.N_batch):
+                # ---------------------------------------
+                # Generate each trial based on its params
+                # ---------------------------------------
                 x,y,m = self.__generate_trial__(self.trial_params_function(batch, trial))
                 x_data.append(x)
                 y_data.append(y)
@@ -53,9 +66,11 @@ class Task(object):
 
 class RDM(Task):
 
-    # return params for a given batch
     def trial_params_function(self, batch, trial):
 
+        # ----------------------------------
+        # Define parameters of a trial
+        # ----------------------------------
         params = dict()
         params['coherence'] = np.random.choice([-0.3, -0.2, -0.1, 0.1, 0.2, 0.3])
         params['stim_noise'] = 0.1
@@ -64,20 +79,25 @@ class RDM(Task):
 
         return params
 
-    # return input, output, mask, at time t
     def trial_function(self, time, params):
 
-        x_t = np.zeros(self.N_in) + np.sqrt(2*self.alpha*params['stim_noise']*
-                                        params['stim_noise'])*np.random.randn(self.N_in)
+        # ----------------------------------
+        # Initialize with noise
+        # ----------------------------------
+        x_t = np.sqrt(2*self.alpha*params['stim_noise']*params['stim_noise'])*np.random.randn(self.N_in)
         y_t = .1 * np.ones(self.N_out)
+        mask_t = np.ones(self.N_out)
 
-
+        # ----------------------------------
+        # Retrieve parameters
+        # ----------------------------------
         coh = params['coherence']
         onset = params['onset_time']
         stim_dur = params['stim_duration']
 
-
-
+        # ----------------------------------
+        # Compute values
+        # ----------------------------------
         if onset < time < onset + stim_dur:
             x_t[0] += coh
             x_t[1] += -coh
@@ -85,7 +105,6 @@ class RDM(Task):
         if time > onset + stim_dur:
             y_t[int(coh < 0)] = 1.
 
-        mask_t = np.ones(self.N_out)
         if time < onset + stim_dur:
             mask_t = np.zeros(self.N_out)
 
