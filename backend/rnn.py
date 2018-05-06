@@ -10,6 +10,9 @@ from initializations import WeightInitializer, GaussianSpectralRadius
 class RNN(object):
     def __init__(self, params):
         self.params = params
+
+        self.name = params['name']
+
         # ----------------------------------
         # Network sizes (tensor dimensions)
         # ----------------------------------
@@ -25,8 +28,8 @@ class RNN(object):
         self.dt = params['dt']
         self.tau = params['tau']
         self.alpha = self.dt / self.tau
-        self.dale_ratio = params['dale_ratio']
-        self.rec_noise = params['rec_noise']
+        self.dale_ratio = params.get('dale_ratio', None)
+        self.rec_noise = params.get('rec_noise', 0.0)
 
         # ----------------------------------
         # Dale's law matrix
@@ -75,67 +78,69 @@ class RNN(object):
         self.output_mask = tf.placeholder("float", [None, N_steps, N_out])
         self.N_batch = tf.shape(self.x)[0]
 
-        # ------------------------------------------------
-        # Trainable variables:
-        # Initial State, weight matrices and biases
-        # ------------------------------------------------
 
-        self.init_state = tf.get_variable('init_state', [1, N_rec],
-                                          initializer=self.initializer.get('init_state'),
-                                          trainable=self.init_state_train)
-        self.init_state = tf.tile(self.init_state, [self.N_batch, 1])
+        with tf.variable_scope(self.name) as scope:
+            # ------------------------------------------------
+            # Trainable variables:
+            # Initial State, weight matrices and biases
+            # ------------------------------------------------
 
-        # Input weight matrix:
-        self.W_in = \
-            tf.get_variable('W_in', [N_rec, N_in],
-                            initializer=self.initializer.get('W_in'),
-                            trainable=self.W_in_train)
+            self.init_state = tf.get_variable('init_state', [1, N_rec],
+                                              initializer=self.initializer.get('init_state'),
+                                              trainable=self.init_state_train)
+            self.init_state = tf.tile(self.init_state, [self.N_batch, 1])
 
-        # Recurrent weight matrix:
-        self.W_rec = \
-            tf.get_variable(
-                'W_rec',
-                [N_rec, N_rec],
-                initializer=self.initializer.get('W_rec'),
-                trainable=self.W_rec_train)
+            # Input weight matrix:
+            self.W_in = \
+                tf.get_variable('W_in', [N_rec, N_in],
+                                initializer=self.initializer.get('W_in'),
+                                trainable=self.W_in_train)
 
-        # Output weight matrix:
-        self.W_out = tf.get_variable('W_out', [N_out, N_rec],
-                                     initializer=self.initializer.get('W_out'),
-                                     trainable=self.W_out_train)
+            # Recurrent weight matrix:
+            self.W_rec = \
+                tf.get_variable(
+                    'W_rec',
+                    [N_rec, N_rec],
+                    initializer=self.initializer.get('W_rec'),
+                    trainable=self.W_rec_train)
 
-        # Recurrent bias:
-        self.b_rec = tf.get_variable('b_rec', [N_rec], initializer=self.initializer.get('b_rec'),
-                                     trainable=self.b_rec_train)
-        # Output bias:
-        self.b_out = tf.get_variable('b_out', [N_out], initializer=self.initializer.get('b_out'),
-                                     trainable=self.b_out_train)
+            # Output weight matrix:
+            self.W_out = tf.get_variable('W_out', [N_out, N_rec],
+                                         initializer=self.initializer.get('W_out'),
+                                         trainable=self.W_out_train)
 
-        # ------------------------------------------------
-        # Non-trainable variables:
-        # Overall connectivity and Dale's law matrices
-        # ------------------------------------------------
+            # Recurrent bias:
+            self.b_rec = tf.get_variable('b_rec', [N_rec], initializer=self.initializer.get('b_rec'),
+                                         trainable=self.b_rec_train)
+            # Output bias:
+            self.b_out = tf.get_variable('b_out', [N_out], initializer=self.initializer.get('b_out'),
+                                         trainable=self.b_out_train)
 
-        # Recurrent Dale's law weight matrix:
-        self.Dale_rec = tf.get_variable('Dale_rec', [N_rec, N_rec],
-                                        initializer=tf.constant_initializer(self.dale_rec),
-                                        trainable=False)
+            # ------------------------------------------------
+            # Non-trainable variables:
+            # Overall connectivity and Dale's law matrices
+            # ------------------------------------------------
 
-        # Output Dale's law weight matrix:
-        self.Dale_out = tf.get_variable('Dale_out', [N_rec, N_rec],
-                                        initializer=tf.constant_initializer(self.dale_out),
-                                        trainable=False)
+            # Recurrent Dale's law weight matrix:
+            self.Dale_rec = tf.get_variable('Dale_rec', [N_rec, N_rec],
+                                            initializer=tf.constant_initializer(self.dale_rec),
+                                            trainable=False)
 
-        # Connectivity weight matrices:
-        self.input_connectivity = tf.get_variable('input_connectivity', [N_rec, N_in],
-                                                  initializer=self.initializer.get('input_connectivity'),
-                                                  trainable=False)
-        self.rec_connectivity = tf.get_variable('rec_connectivity', [N_rec, N_rec],
-                                                initializer=self.initializer.get('rec_connectivity'),
-                                                trainable=False)
-        self.output_connectivity = tf.get_variable('output_connectivity', [N_out, N_rec],
-                                                   initializer=self.initializer.get('output_connectivity'),
-                                                   trainable=False)
+            # Output Dale's law weight matrix:
+            self.Dale_out = tf.get_variable('Dale_out', [N_rec, N_rec],
+                                            initializer=tf.constant_initializer(self.dale_out),
+                                            trainable=False)
+
+            # Connectivity weight matrices:
+            self.input_connectivity = tf.get_variable('input_connectivity', [N_rec, N_in],
+                                                      initializer=self.initializer.get('input_connectivity'),
+                                                      trainable=False)
+            self.rec_connectivity = tf.get_variable('rec_connectivity', [N_rec, N_rec],
+                                                    initializer=self.initializer.get('rec_connectivity'),
+                                                    trainable=False)
+            self.output_connectivity = tf.get_variable('output_connectivity', [N_out, N_rec],
+                                                       initializer=self.initializer.get('output_connectivity'),
+                                                       trainable=False)
 
         # --------------------------------------------------
         # Flag to check if variables initialized, model built

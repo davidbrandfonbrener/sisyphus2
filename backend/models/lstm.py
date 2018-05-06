@@ -32,35 +32,35 @@ class LSTM(RNN):
         # ----------------------------------
         # Tensorflow initializations
         # ----------------------------------
-
-        self.init_hidden = tf.get_variable('init_hidden', [self.N_batch, self.N_rec],
-                                           initializer=self.init_hidden_initializer,
+        with tf.variable_scope(self.name) as scope:
+            self.init_hidden = tf.get_variable('init_hidden', [self.N_batch, self.N_rec],
+                                               initializer=self.init_hidden_initializer,
+                                                trainable=True)
+            self.init_cell = tf.get_variable('init_cell', [self.N_batch, self.N_rec],
+                                             initializer=self.init_cell_initializer,
                                             trainable=True)
-        self.init_cell = tf.get_variable('init_cell', [self.N_batch, self.N_rec],
-                                         initializer=self.init_cell_initializer,
-                                        trainable=True)
 
-        self.W_f = tf.get_variable('W_f', [self.N_concat, self.N_rec],
-                                        initializer=self.W_f_initializer,
-                                        trainable=True)
-        self.W_i = tf.get_variable('W_i', [self.N_concat, self.N_rec],
-                                        initializer=self.W_i_initializer,
-                                        trainable=True)
-        self.W_c = tf.get_variable('W_c', [self.N_concat, self.N_rec],
-                                        initializer=self.W_c_initializer,
-                                        trainable=True)
-        self.W_o = tf.get_variable('W_o', [self.N_concat, self.N_rec],
-                                        initializer=self.W_o_initializer,
-                                        trainable=True)
+            self.W_f = tf.get_variable('W_f', [self.N_concat, self.N_rec],
+                                            initializer=self.W_f_initializer,
+                                            trainable=True)
+            self.W_i = tf.get_variable('W_i', [self.N_concat, self.N_rec],
+                                            initializer=self.W_i_initializer,
+                                            trainable=True)
+            self.W_c = tf.get_variable('W_c', [self.N_concat, self.N_rec],
+                                            initializer=self.W_c_initializer,
+                                            trainable=True)
+            self.W_o = tf.get_variable('W_o', [self.N_concat, self.N_rec],
+                                            initializer=self.W_o_initializer,
+                                            trainable=True)
 
-        self.b_f = tf.get_variable('b_f', [self.N_rec], initializer=self.b_f_initializer,
-                                     trainable=True)
-        self.b_i = tf.get_variable('b_i', [self.N_rec], initializer=self.b_i_initializer,
-                                   trainable=True)
-        self.b_c = tf.get_variable('b_c', [self.N_rec], initializer=self.b_c_initializer,
-                                   trainable=True)
-        self.b_o = tf.get_variable('b_o', [self.N_rec], initializer=self.b_o_initializer,
-                                   trainable=True)
+            self.b_f = tf.get_variable('b_f', [self.N_rec], initializer=self.b_f_initializer,
+                                         trainable=True)
+            self.b_i = tf.get_variable('b_i', [self.N_rec], initializer=self.b_i_initializer,
+                                       trainable=True)
+            self.b_c = tf.get_variable('b_c', [self.N_rec], initializer=self.b_c_initializer,
+                                       trainable=True)
+            self.b_o = tf.get_variable('b_o', [self.N_rec], initializer=self.b_o_initializer,
+                                       trainable=True)
 
 
 
