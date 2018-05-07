@@ -7,10 +7,14 @@ from regularizations import Regularizer
 from loss_functions import LossFunction
 from initializations import WeightInitializer, GaussianSpectralRadius
 
+
 class RNN(object):
     def __init__(self, params):
         self.params = params
 
+        # --------------------------------------------
+        # Unique name used to determine variable scope
+        # --------------------------------------------
         self.name = params['name']
 
         # ----------------------------------
@@ -20,7 +24,6 @@ class RNN(object):
         N_rec = self.N_rec = params['N_rec']
         N_out = self.N_out = params['N_out']
         N_steps = self.N_steps = params['N_steps']
-        #N_batch = self.N_batch = params['N_batch']
 
         # ----------------------------------
         # Physical parameters
@@ -78,7 +81,9 @@ class RNN(object):
         self.output_mask = tf.placeholder("float", [None, N_steps, N_out])
         self.N_batch = tf.shape(self.x)[0]
 
-
+        # --------------------------------------------------
+        # Initialize variables in proper scope
+        # ---------------------------------------------------
         with tf.variable_scope(self.name) as scope:
             # ------------------------------------------------
             # Trainable variables:
@@ -148,8 +153,6 @@ class RNN(object):
         self.is_initialized = False
         self.is_built = False
 
-
-
     def build(self):
         # --------------------------------------------------
         # Define the predictions
@@ -193,27 +196,17 @@ class RNN(object):
         tf.reset_default_graph()
         return
 
-
-
-
-
     def recurrent_timestep(self, rnn_in, state):
 
         pass
-
 
     def output_timestep(self, state):
 
         pass
 
-
     def forward_pass(self):
 
         pass
-
-
-
-
 
     def save(self, save_path):
 
@@ -229,14 +222,12 @@ class RNN(object):
 
         return
 
-
     def train(self, trial_batch_generator, train_params):
 
         t0 = time()
         # --------------------------------------------------
         # Extract params
         # --------------------------------------------------
-        batch_size = train_params.get('batch_size', 64)
         learning_rate = train_params.get('learning_rate', .001)
         training_iters = train_params.get('training_iters', 50000)
         loss_epoch = train_params.get('loss_epoch', 10)
@@ -244,7 +235,7 @@ class RNN(object):
         save_weights_path = train_params.get('save_weights_path', None)
         save_training_weights_epoch = train_params.get('save_training_weights_epoch', 100)
         training_weights_path = train_params.get('training_weights_path', None)
-        generator_function = train_params.get('generator function', None)
+        generator_function = train_params.get('generator_function', None)
         optimizer = train_params.get('optimizer',
                                      tf.train.AdamOptimizer(learning_rate = learning_rate))
         clip_grads = train_params.get('clip_grads', True)
@@ -278,6 +269,7 @@ class RNN(object):
         # Training loop
         # --------------------------------------------------
         epoch = 1
+        batch_size = trial_batch_generator.next()[0].shape[0]
         losses = []
 
         while epoch * batch_size < training_iters:
@@ -325,9 +317,6 @@ class RNN(object):
         # Return losses, training time, initialization time
         # --------------------------------------------------
         return losses, (t2 - t1), (t1 - t0)
-
-
-
 
     def test(self, trial_batch):
 

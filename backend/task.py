@@ -26,7 +26,7 @@ class Task(object):
     def trial_function(self, time, params):
         pass
 
-    def __generate_trial__(self, params):
+    def generate_trial(self, params):
 
         # ----------------------------------
         # Loop to generate a single trial
@@ -54,7 +54,7 @@ class Task(object):
                 # ---------------------------------------
                 # Generate each trial based on its params
                 # ---------------------------------------
-                x,y,m = self.__generate_trial__(self.trial_params_function(batch, trial))
+                x,y,m = self.generate_trial(self.trial_params_function(batch, trial))
                 x_data.append(x)
                 y_data.append(y)
                 mask.append(m)

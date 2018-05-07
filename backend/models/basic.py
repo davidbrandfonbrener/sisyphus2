@@ -2,7 +2,6 @@ from sisyphus2.backend.rnn import RNN
 import tensorflow as tf
 
 
-
 class Basic(RNN):
 
     def recurrent_timestep(self, rnn_in, state):

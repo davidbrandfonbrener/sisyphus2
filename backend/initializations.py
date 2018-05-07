@@ -13,7 +13,7 @@ class WeightInitializer(object):
         N_in = self.N_in = kwargs.get('N_in')
         N_rec = self.N_rec = kwargs.get('N_rec')
         N_out = self.N_out = kwargs.get('N_out')
-        self.autapses = kwargs.get('autapses')
+        self.autapses = kwargs.get('autapses', True)
 
         self.initializations = dict()
 
@@ -28,13 +28,12 @@ class WeightInitializer(object):
             # ----------------------------------
             self.initializations['W_in'] = .2 * np.random.rand(N_rec, N_in) - .1
             self.initializations['W_out'] = .2 * np.random.rand(N_out, N_rec) - .1
+            self.initializations['W_rec'] = np.random.randn(N_rec, N_rec)
 
             self.initializations['b_rec'] = np.zeros(N_rec)
             self.initializations['b_out'] = np.zeros(N_out)
 
             self.initializations['init_state'] = .1 + .01 * np.random.randn(N_rec)
-
-            self.initializations['W_rec'] = np.random.randn(N_rec, N_rec)
 
             self.initializations['input_connectivity'] = np.ones([N_rec, N_in])
             self.initializations['rec_connectivity'] = np.ones([N_rec, N_rec])
