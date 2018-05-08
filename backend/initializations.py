@@ -45,11 +45,9 @@ class WeightInitializer(object):
 
         return
 
-
     def get(self, tensor_name):
 
         return tf.constant_initializer(self.initializations[tensor_name])
-
 
     def save(self, save_path):
 

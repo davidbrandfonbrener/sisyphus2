@@ -1,7 +1,6 @@
 import tensorflow as tf
 
 
-
 class LossFunction(object):
 
     def __init__(self, params):
@@ -22,7 +21,6 @@ class LossFunction(object):
 
     def mean_squared_error(self, predictions, y, output_mask):
         return tf.reduce_mean(tf.square(output_mask * (predictions - y)))
-
 
     def binary_cross_entropy(self, predictions, y, output_mask):
         return tf.reduce_mean( output_mask *
