@@ -30,7 +30,7 @@ class LSTM(RNN):
         self.b_o_initializer = tf.constant_initializer(1.0)
 
         # ----------------------------------
-        # Tensorflow initializations
+        # TensorFlow initializations
         # ----------------------------------
         with tf.variable_scope(self.name) as scope:
             self.init_hidden = tf.get_variable('init_hidden', [self.N_batch, self.N_rec],

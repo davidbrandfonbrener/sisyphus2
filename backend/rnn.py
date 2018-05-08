@@ -30,7 +30,7 @@ class RNN(object):
         # ----------------------------------
         self.dt = params['dt']
         self.tau = params['tau']
-        self.alpha = self.dt / self.tau
+        self.alpha = (1.0 * self.dt) / self.tau
         self.dale_ratio = params.get('dale_ratio', None)
         self.rec_noise = params.get('rec_noise', 0.0)
 
@@ -256,8 +256,9 @@ class RNN(object):
         # Call the optimizer and initialize variables
         # --------------------------------------------------
         optimize = optimizer.apply_gradients(grads)
-        self.sess.run(tf.global_variables_initializer())
-        self.is_initialized = True
+        if not self.is_initialized:
+            self.sess.run(tf.global_variables_initializer())
+            self.is_initialized = True
 
         # --------------------------------------------------
         # Record training time for performance benchmarks

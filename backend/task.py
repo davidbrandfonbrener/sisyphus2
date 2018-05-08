@@ -74,7 +74,7 @@ class RDM(Task):
         params = dict()
         params['coherence'] = np.random.choice([0.5])
         params['direction'] = np.random.choice([0, 1])
-        params['stim_noise'] = 0.05
+        params['stim_noise'] = 0.4
         params['onset_time'] = self.T / 4.0 #np.random.random() * self.T / 2.0
         params['stim_duration'] = self.T / 4.0 #np.random.random() * self.T / 4.0 + self.T / 8.0
 
@@ -86,7 +86,7 @@ class RDM(Task):
         # Initialize with noise
         # ----------------------------------
         x_t = np.sqrt(2*self.alpha*params['stim_noise']*params['stim_noise'])*np.random.randn(self.N_in)
-        y_t = .1 * np.ones(self.N_out)
+        y_t = np.zeros(self.N_out)
         mask_t = np.ones(self.N_out)
 
         # ----------------------------------

@@ -14,7 +14,7 @@ class LossFunction(object):
             loss = self.mean_squared_error(model.predictions, model.y, model.output_mask)
 
         # TODO TEST THIS
-        if self.type == "binary_corss_entropy":
+        if self.type == "binary_cross_entropy":
             loss = self.binary_cross_entropy(model.prediction, model.y, model.output_mask)
 
         return loss
