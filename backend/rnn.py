@@ -186,7 +186,6 @@ class RNN(object):
 
         return
 
-
     def destruct(self):
         # --------------------------------------------------
         # Close the session. Delete the graph.
@@ -215,21 +214,21 @@ class RNN(object):
         for var in tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES):
             # avoid saving duplicates
             if var.name.endswith(':0'):
-                name = var.name[:-2]
-                weights_dict.update( {name: var.eval(session = self.sess)} )
+                name = var.name[len(self.name):-2]
+                weights_dict.update({name: var.eval(session=self.sess)})
 
         np.savez(save_path, **weights_dict)
 
         return
 
-    def train(self, trial_batch_generator, train_params):
+    def train(self, trial_batch_generator, train_params={}):
 
         t0 = time()
         # --------------------------------------------------
         # Extract params
         # --------------------------------------------------
         learning_rate = train_params.get('learning_rate', .001)
-        training_iters = train_params.get('training_iters', 50000)
+        training_iters = train_params.get('training_iters', 10000)
         loss_epoch = train_params.get('loss_epoch', 10)
         verbosity = train_params.get('verbosity', True)
         save_weights_path = train_params.get('save_weights_path', None)
@@ -237,7 +236,7 @@ class RNN(object):
         training_weights_path = train_params.get('training_weights_path', None)
         generator_function = train_params.get('generator_function', None)
         optimizer = train_params.get('optimizer',
-                                     tf.train.AdamOptimizer(learning_rate = learning_rate))
+                                     tf.train.AdamOptimizer(learning_rate=learning_rate))
         clip_grads = train_params.get('clip_grads', True)
 
         # --------------------------------------------------

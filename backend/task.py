@@ -72,8 +72,8 @@ class RDM(Task):
         # Define parameters of a trial
         # ----------------------------------
         params = dict()
-        params['coherence'] = np.random.choice([-0.3, -0.2, -0.1, 0.1, 0.2, 0.3])
-        params['stim_noise'] = 0.1
+        params['coherence'] = np.random.choice([-0.3, 0.3])
+        params['stim_noise'] = 0.05
         params['onset_time'] = np.random.random() * self.T / 2.0
         params['stim_duration'] = np.random.random() * self.T / 4.0 + self.T / 8.0
 
@@ -99,14 +99,14 @@ class RDM(Task):
         # Compute values
         # ----------------------------------
         if onset < time < onset + stim_dur:
-            x_t[0] += coh
-            x_t[1] += -coh
+            x_t[0] += 1 + coh
+            x_t[1] += 1 - coh
 
         if time > onset + stim_dur:
             y_t[int(coh < 0)] = 1.
 
-        if time < onset + stim_dur:
-            mask_t = np.zeros(self.N_out)
+        # if time < onset + stim_dur:
+        #    mask_t = np.zeros(self.N_out)
 
         return x_t, y_t, mask_t
 
