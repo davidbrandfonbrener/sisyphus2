@@ -256,9 +256,8 @@ class RNN(object):
         # Call the optimizer and initialize variables
         # --------------------------------------------------
         optimize = optimizer.apply_gradients(grads)
-        if not self.is_initialized:
-            self.sess.run(tf.global_variables_initializer())
-            self.is_initialized = True
+        self.sess.run(tf.global_variables_initializer())
+        self.is_initialized = True
 
         # --------------------------------------------------
         # Record training time for performance benchmarks
