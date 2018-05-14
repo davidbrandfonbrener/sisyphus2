@@ -40,7 +40,6 @@ class Basic(RNN):
 
         return new_state
 
-
     def output_timestep(self, state):
 
         if self.dale_ratio:
@@ -55,7 +54,6 @@ class Basic(RNN):
 
         return output
 
-
     def forward_pass(self):
 
         rnn_inputs = tf.unstack(self.x, axis=1)
@@ -68,12 +66,6 @@ class Basic(RNN):
             rnn_outputs.append(output)
             rnn_states.append(state)
         return tf.transpose(rnn_outputs, [1, 0, 2]), tf.transpose(rnn_states, [1, 0, 2])
-
-
-
-
-
-
 
 
 class BasicSigmoid(Basic):
@@ -115,14 +107,10 @@ class BasicSigmoid(Basic):
         return new_state
 
 
-
-
-
 class BasicScan(Basic):
 
     def recurrent_timestep_scan(self, state, rnn_in):
         return self.recurrent_timestep(rnn_in, state)
-
 
     def output_timestep_scan(self, dummy, state):
         return self.output_timestep(state)

@@ -62,9 +62,6 @@ class LSTM(RNN):
             self.b_o = tf.get_variable('b_o', [self.N_rec], initializer=self.b_o_initializer,
                                        trainable=True)
 
-
-
-
     def recurrent_timestep(self, rnn_in, hidden, cell):
 
         f = tf.nn.sigmoid(tf.matmul(tf.concat([hidden, rnn_in], 1), self.W_f)
@@ -85,16 +82,11 @@ class LSTM(RNN):
 
         return new_hidden, new_cell
 
-
-
-
     def output_timestep(self, hidden):
 
         output = tf.matmul(hidden, self.W_out, transpose_b=True) + self.b_out
 
         return output
-
-
 
     def forward_pass(self):
         rnn_inputs = tf.unstack(self.x, axis=1)
