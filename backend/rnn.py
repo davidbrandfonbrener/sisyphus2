@@ -17,7 +17,7 @@ class RNN(object):
         # --------------------------------------------
         try:
             self.name = params['name']
-        except ValueError:
+        except KeyError:
             print("You must pass a  'name' to RNN")
 
         # ----------------------------------
@@ -25,19 +25,19 @@ class RNN(object):
         # ----------------------------------
         try:
             N_in = self.N_in = params['N_in']
-        except ValueError:
+        except KeyError:
             print("You must pass 'N_in' to RNN")
         try:
             N_rec = self.N_rec = params['N_rec']
-        except ValueError:
+        except KeyError:
             print("You must pass 'N_rec' to RNN")
         try:
             N_out = self.N_out = params['N_out']
-        except ValueError:
+        except KeyError:
             print("You must pass 'N_out' to RNN")
         try:
             N_steps = self.N_steps = params['N_steps']
-        except ValueError:
+        except KeyError:
             print("You must pass 'N_steps' to RNN")
 
         # ----------------------------------
