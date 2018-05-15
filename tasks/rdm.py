@@ -1,4 +1,5 @@
 from task import Task
+import numpy as np
 
 
 class RDM(Task):

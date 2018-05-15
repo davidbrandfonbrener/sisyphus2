@@ -21,7 +21,7 @@ class Task(object):
         self.N_steps = int(np.ceil(self.T / self.dt))
 
     def trial_params_function(self, batch, trial):
-            pass
+        pass
 
     def trial_function(self, time, params):
         pass
