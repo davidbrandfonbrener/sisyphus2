@@ -51,6 +51,7 @@ implicit params:
 - N_rec
 - N_in
 - N_out
+- N_steps
 - dt
 - tau
 - dale_ratio
@@ -62,10 +63,9 @@ implicit params:
 implicit params:
   - alpha
   - N_batch
-  - N_steps
 
 
-###Train:
+### Train:
 - learning_rate
 - training_iters
 - loss_epoch

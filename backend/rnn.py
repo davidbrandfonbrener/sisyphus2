@@ -15,15 +15,30 @@ class RNN(object):
         # --------------------------------------------
         # Unique name used to determine variable scope
         # --------------------------------------------
-        self.name = params['name']
+        try:
+            self.name = params['name']
+        except ValueError:
+            print("You must pass a  'name' to RNN")
 
         # ----------------------------------
         # Network sizes (tensor dimensions)
         # ----------------------------------
-        N_in = self.N_in = params['N_in']
-        N_rec = self.N_rec = params['N_rec']
-        N_out = self.N_out = params['N_out']
-        N_steps = self.N_steps = params['N_steps']
+        try:
+            N_in = self.N_in = params['N_in']
+        except ValueError:
+            print("You must pass 'N_in' to RNN")
+        try:
+            N_rec = self.N_rec = params['N_rec']
+        except ValueError:
+            print("You must pass 'N_rec' to RNN")
+        try:
+            N_out = self.N_out = params['N_out']
+        except ValueError:
+            print("You must pass 'N_out' to RNN")
+        try:
+            N_steps = self.N_steps = params['N_steps']
+        except ValueError:
+            print("You must pass 'N_steps' to RNN")
 
         # ----------------------------------
         # Physical parameters
