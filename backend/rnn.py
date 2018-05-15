@@ -19,6 +19,7 @@ class RNN(object):
             self.name = params['name']
         except KeyError:
             print("You must pass a  'name' to RNN")
+            raise
 
         # ----------------------------------
         # Network sizes (tensor dimensions)
@@ -27,24 +28,36 @@ class RNN(object):
             N_in = self.N_in = params['N_in']
         except KeyError:
             print("You must pass 'N_in' to RNN")
+            raise
         try:
             N_rec = self.N_rec = params['N_rec']
         except KeyError:
             print("You must pass 'N_rec' to RNN")
+            raise
         try:
             N_out = self.N_out = params['N_out']
         except KeyError:
             print("You must pass 'N_out' to RNN")
+            raise
         try:
             N_steps = self.N_steps = params['N_steps']
         except KeyError:
             print("You must pass 'N_steps' to RNN")
+            raise
 
         # ----------------------------------
         # Physical parameters
         # ----------------------------------
-        self.dt = params['dt']
-        self.tau = params['tau']
+        try:
+            self.dt = params['dt']
+        except KeyError:
+            print("You must pass 'dt' to RNN")
+            raise
+        try:
+            self.tau = params['tau']
+        except KeyError:
+            print("You must pass 'dt' to RNN")
+            raise
         self.alpha = (1.0 * self.dt) / self.tau
         self.dale_ratio = params.get('dale_ratio', None)
         self.rec_noise = params.get('rec_noise', 0.0)

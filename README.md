@@ -19,6 +19,8 @@ Code is written and upkept by: @davidbrandfonbrener @dbehrlic @ABAtanasov
 
 - Project names
 
+- Change from params to **kwargs?
+
 - Does destruct destruct all models?
 
 - Save params?
