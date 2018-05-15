@@ -20,8 +20,8 @@ class Task(object):
         self.alpha = (1.0 * self.dt) / self.tau
         self.N_steps = int(np.ceil(self.T / self.dt))
 
-    def trial_params_function(self, batch, trial):
-            pass
+    def generate_trial_params(self, batch, trial):
+        pass
 
     def trial_function(self, time, params):
         pass
@@ -54,7 +54,7 @@ class Task(object):
                 # ---------------------------------------
                 # Generate each trial based on its params
                 # ---------------------------------------
-                x,y,m = self.generate_trial(self.trial_params_function(batch, trial))
+                x,y,m = self.generate_trial(self.generate_trial_params(batch, trial))
                 x_data.append(x)
                 y_data.append(y)
                 mask.append(m)

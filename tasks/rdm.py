@@ -1,15 +1,16 @@
 from task import Task
+import numpy as np
 
 
 class RDM(Task):
 
-    def trial_params_function(self, batch, trial):
+    def generate_trial_params(self, batch, trial):
 
         # ----------------------------------
         # Define parameters of a trial
         # ----------------------------------
         params = dict()
-        params['coherence'] = np.random.choice([0.3])
+        params['coherence'] = np.random.choice([0.1, 0.3, 0.5, 0.7])
         params['direction'] = np.random.choice([0, 1])
         params['stim_noise'] = 0.1
         params['onset_time'] = np.random.random() * self.T / 2.0
@@ -17,7 +18,7 @@ class RDM(Task):
 
         return params
 
-    def trial_function(self, time, params):
+    def trial_function(self, t, params):
 
         # ----------------------------------
         # Initialize with noise
@@ -37,14 +38,14 @@ class RDM(Task):
         # ----------------------------------
         # Compute values
         # ----------------------------------
-        if onset < time < onset + stim_dur:
+        if onset < t < onset + stim_dur:
             x_t[dir] += 1 + coh
             x_t[(dir + 1) % 2] += 1
 
-        if time > onset + stim_dur + 20:
+        if t > onset + stim_dur + 20:
             y_t[dir] = 1.
 
-        if time < onset + stim_dur:
+        if t < onset + stim_dur:
             mask_t = np.zeros(self.N_out)
 
         return x_t, y_t, mask_t

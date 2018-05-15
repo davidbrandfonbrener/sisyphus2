@@ -1,15 +1,15 @@
 import numpy as np
 from backend.simulation import Simulator
-import flip_flop
+import flip_flop_old
 import matplotlib.pyplot as plt
 
 
-params = flip_flop.set_params(N_batch= 64,
-                       input_wait=5, stim_dur=10, quiet_gap=20, N_turns=2,
-                       rec_noise=0, stim_noise=0,
-                       dale_ratio=.8, tau=100, dt=10.)
+params = flip_flop_old.set_params(N_batch= 64,
+                                  input_wait=5, stim_dur=10, quiet_gap=20, N_turns=2,
+                                  rec_noise=0, stim_noise=0,
+                                  dale_ratio=.8, tau=100, dt=10.)
 
-x,y,mask = flip_flop.build_train_batch(params)
+x,y,mask = flip_flop_old.build_train_batch(params)
 
 sim = Simulator(params, weights_path="./weights/flipflop.npz")
 
