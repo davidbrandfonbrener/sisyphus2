@@ -7,20 +7,20 @@ Code is written and upkept by: @davidbrandfonbrener @dbehrlic @ABAtanasov
 
 ## TODO
 
-  ### Tasks. Move all tasks over to object oriented task class
+- Tasks. Move all tasks over to object oriented task class
 
-  ### Throw errors on bad inputs. Try/except for params
+- Throw errors on bad inputs. Try/except for params
 
-  ### Test/expand simulator objects
+- Test/expand simulator objects
 
-  ### Demos
+- Demos
 
-  ### Documentation
+- Documentation
 
-  ### Project names
+- Project names
 
-  ### Does destruct destruct all models?
+- Does destruct destruct all models?
 
-  ### Save params?
+- Save params?
 
-  ### Clean up dale ratio handling?
+- Clean up dale ratio handling?
