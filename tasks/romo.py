@@ -12,9 +12,9 @@ def set_params(Name = "romo", N_rec = 500,
                var_fix_length = 0, var_stim_length = 0,
                stim_noise = 0.1, rec_noise = 0.1,
                dale_ratio=0.8, dt = 20, tau = 100,
-               N_batch=64):
+               N_batch=64,L2_firing_rate=0.):
 
-    N_steps = fixation + var_fix_length + stim_1 + stim_2 + 2 * var_stim_length + decision
+    N_steps = fixation + var_fix_length + stim_1 + stim_2 + 2 * var_stim_length + decision + delay + 100
     params = dict()
 
     params['Name']            = Name
@@ -39,6 +39,7 @@ def set_params(Name = "romo", N_rec = 500,
     params['var_stim_length'] = var_stim_length
     params['stim_noise']      = stim_noise
     params['rec_noise']       = rec_noise
+    params['L2_firing_rate']  = L2_firing_rate
 
     return params
 
@@ -51,7 +52,7 @@ def scale_n(f):
     return 0.4 + 0.8*(34 - f)/(34 - 10)
 
 
-def build_train_batch(params):
+def build_train_trials(params):
     N_in    = params['N_in']
     N_out   = params['N_out']
     N_batch = params['N_batch']
@@ -78,8 +79,9 @@ def build_train_batch(params):
     output_times = np.zeros([N_batch, 2], dtype=np.int)
     for sample in np.arange(N_batch):
         input_times[sample, 0]  = fixation + fix_delay[sample]
-        output_times[sample, 0] = fixation + fix_delay[sample] + stim_1 + stim_delay[sample]
         input_times[sample, 1]  = fixation + fix_delay[sample] + stim_1 + stim_delay[sample] + delay
+        
+        output_times[sample, 0] = fixation + fix_delay[sample] + stim_1 + stim_delay[sample]
         output_times[sample, 1] = fixation + fix_delay[sample] + stim_1 + 2*stim_delay[sample] + delay + stim_2
     params['input_times'] = input_times
     params['output_times'] = output_times
@@ -99,16 +101,18 @@ def build_train_batch(params):
         else:
             f2, f1 = fpair
             choice = 1
+            
         buzz_1 = [input_times[sample, 0], input_times[sample, 0] + stim_1 + stim_delay[sample]]
         x_train[sample, buzz_1[0]:buzz_1[1], 0] = scale_p(f1)
         x_train[sample, buzz_1[0]:buzz_1[1], 1] = scale_n(f1)
+        
         buzz_2 = [input_times[sample, 1], input_times[sample, 1] + stim_1 + stim_delay[sample]]
         x_train[sample, buzz_2[0]:buzz_2[1], 0] = scale_p(f2)
         x_train[sample, buzz_2[0]:buzz_2[1], 1] = scale_n(f2)
 
         y_train[sample, :input_times[sample, 0], :] = lo
-        y_train[sample, :output_times[sample, 1]:, choice] = hi
-        y_train[sample, :output_times[sample, 1]:, 1-choice] = lo
+        y_train[sample, output_times[sample, 1]:, choice] = hi
+        y_train[sample, output_times[sample, 1]:, 1-choice] = lo
 
         mask[sample, :input_times[sample, 0], :]  = 1.0
         mask[sample, output_times[sample, 1]:, :] = 1.0
@@ -118,19 +122,21 @@ def build_train_batch(params):
 
 def generate_train_trials(params):
     while 1 > 0:
-        yield build_train_batch(params)
+        yield build_train_trials(params)
 
-params = set_params()
 
-generator = generate_train_trials(params)
+if __name__ == "__main__":
+    params = set_params()
 
-print "time steps:", params["N_in"]
-print "N_batch:", params["N_batch"]
+    generator = generate_train_trials(params)
 
-model = Model(params)
+    print "time steps:", params["N_in"]
+    print "N_batch:", params["N_batch"]
 
-configuration = tf.ConfigProto(inter_op_parallelism_threads=10, intra_op_parallelism_threads=10)
-sess = tf.Session(config=configuration)
-model.train(sess, generator, training_iters=10000)
+    model = Model(params)
 
-V.show_W_rec(model, sess)
+    configuration = tf.ConfigProto(inter_op_parallelism_threads=10, intra_op_parallelism_threads=10)
+    sess = tf.Session(config=configuration)
+    model.train(sess, generator, training_iters=10000)
+
+    V.show_W_rec(model, sess)

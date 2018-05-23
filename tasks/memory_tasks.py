@@ -138,6 +138,8 @@ def build_train_trials(params):
         #Mask output during early response epoch
         mask[sample,range(input_wait+var_in[sample]+stim_dur+mem_gap+var_delay[sample]+ stim_dur + out_gap + var_out[sample],
                           input_wait+var_in[sample]+stim_dur+mem_gap+var_delay[sample]+ stim_dur + out_gap + var_out[sample]+10),:] = 0
+        #Mask until output
+        mask[sample,range(0,input_wait+var_in[sample]+stim_dur+mem_gap+var_delay[sample]+ stim_dur + out_gap + var_out[sample]+10),:] = 0
              
     #note:#TODO im doing a quick fix, only considering 1 ouput neuron
     
