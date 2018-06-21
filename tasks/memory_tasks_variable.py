@@ -17,7 +17,7 @@ from scipy.spatial.distance import pdist, squareform
 # Builds a dictionary of parameters that specifies the information
 # about an instance of this specific task
 def set_params(n_in = 12, n_out = 2, input_wait = 30, mem_gap = 40, stim_dur = 10,
-               out_gap = 0, out_dur=20, var_delay_length = 0, var_in_wait=0,
+               out_gap = 0, out_dur=20, var_delay_length = 0, var_in_wait=0, p_stimulus = [.5,.5],
                var_out_gap = 0, stim_noise = 0, rec_noise = .1, L1_rec = 0, L1_in = 0, L1_out = 0, 
                L2_firing_rate = 1, sample_size = 128, epochs = 100,
                N_rec = 50, dale_ratio=0.8, tau=100.0, dt = 10.0, biases = True,
@@ -56,6 +56,7 @@ def set_params(n_in = 12, n_out = 2, input_wait = 30, mem_gap = 40, stim_dur = 1
     params['L2_firing_rate']   = L2_firing_rate
     params['biases']           = biases
     params['second_in_scale']  = second_in_scale #If = 0, no second input
+    params['p_stimulus']       = p_stimulus
 
     return params
 
@@ -78,6 +79,7 @@ def build_train_trials(params):
     task = params['task']
     second_in_scale = params['second_in_scale']
     go_cue = params['go_cue']
+    p_stimulus = params['p_stimulus']
 
     if var_delay_length == 0:
         var_delay = np.zeros(sample_size, dtype=int)
@@ -96,7 +98,7 @@ def build_train_trials(params):
 
     seq_dur = input_wait + var_in_wait + stim_dur + mem_gap + var_delay_length + stim_dur + out_gap + var_out_gap + out_dur
 
-    input_pattern = np.random.randint(2,size=(sample_size,2))
+    input_pattern = np.random.choice(range(2),size=(sample_size,2),replace=True,p=p_stimulus)
     #input_order = np.random.randint(2,size=(sample_size,2))
     # if task == 'xor':
     #     output_pattern = (np.sum(input_pattern,1) == 1).astype('int') #xor
@@ -811,22 +813,22 @@ def analysis_and_write(params,weights_path,fig_directory,run_name,no_rec_noise=T
 if __name__ == "__main__":
     
     import argparse
+    import pickle
     
     parser = argparse.ArgumentParser()
     parser.add_argument('run_name', help="task name", type=str)
-    parser.add_argument('fig_directory',help="where to save figures")
-    parser.add_argument('weights_path',help="where to save weights")
     parser.add_argument('-m','--mem_gap', help="supply memory gap length", type=int,default=50)
     parser.add_argument('-v','--var_delay', help="supply variable memory gap delay", type=int,default=0)
     parser.add_argument('-r','--rec_noise', help ="recurrent noise", type=float,default=0.0)
     parser.add_argument('-i','--initialization', help ="initialization of Wrec", type=str,default='gauss')
     parser.add_argument('-t','--training_iters', help="training iterations", type=int,default=300000)
-    parser.add_argument('-ts','--task',help="task type",default='memory_saccade')
     args = parser.parse_args()
     
     #run params
     run_name = args.run_name
-    fig_directory = args.fig_directory
+    output_weights_path = '../weights/' + run_name + '.npz'
+    trials_path = '../weights/' + run_name + '_trials.npz'
+    params_path = '../weights/' + run_name + '_params.p'
     
     #initialization of wrec
     init_type = args.initialization
@@ -839,23 +841,30 @@ if __name__ == "__main__":
     out_dur = 60
     
     var_delay_length = args.var_delay
-    var_in_wait = 40
+    var_in_wait = 0
     var_out_gap = 0
+    p_stimulus = [.5,.5]
     second_in_scale = 0.  #Only one input period or two (e.g. mem saccade no distractor vs with distractor)
-    task = args.task
+    go_cue = True
     
-    #model params
-    n_in = 2 
-    n_hidden = 100 
+    
+    #model params  
+    n_in = 12 
+    N_rec = 200 
     n_out = 2
     #n_steps = 80 
     tau = 100.0 #As double
-    dt = 20.0  #As double
+    dt = 10.0  #As double
     dale_ratio = 0
     rec_noise = args.rec_noise
-    stim_noise = 0.1
+    stim_noise = 0.01
     batch_size = 128
     
+    #regularization
+    L2_firing_rate = 1.
+    L1_rec = 0.01
+    L1_in = 0.01
+    L1_out = 0.01
     
     #train params
     learning_rate = .0001 
@@ -865,16 +874,17 @@ if __name__ == "__main__":
     #weights_path = '../weights/' + run_name + '.npz'
     
     params = set_params(epochs=200, sample_size= batch_size, input_wait=input_wait, 
-                        stim_dur=stim_dur, mem_gap=mem_gap_length, out_gap = out_gap, out_dur=out_dur, 
-                        N_rec=n_hidden, n_out = n_out, n_in = n_in, 
-                        var_delay_length=var_delay_length,
-                        var_in_wait = var_in_wait, var_out_gap = var_out_gap,
-                        rec_noise=rec_noise, stim_noise=stim_noise, 
-                        dale_ratio=dale_ratio, tau=tau, task=task,
-                        second_in_scale=second_in_scale,init_type=init_type)
+                    stim_dur=stim_dur, mem_gap=mem_gap_length, out_gap = out_gap, out_dur=out_dur, 
+                    N_rec=N_rec, p_stimulus = p_stimulus, #n_out = n_out, n_in = n_in, 
+                    var_delay_length=var_delay_length, go_cue = go_cue,
+                    var_in_wait = var_in_wait, var_out_gap = var_out_gap,
+                    rec_noise=rec_noise, stim_noise=stim_noise, 
+                    dale_ratio=dale_ratio, dt=dt, tau=tau,
+                    second_in_scale=second_in_scale,
+                    L2_firing_rate=L2_firing_rate,L1_rec=L1_rec,L1_in=L1_in,L1_out=L1_out)
     
     
-    output_weights_path = args.weights_path
+    #output_weights_path = args.weights_path
     
     'external weight intializer class'
     autapses = True
@@ -892,24 +902,10 @@ if __name__ == "__main__":
     model.train(sess, generator, learning_rate = learning_rate, 
                 training_iters = training_iters, save_weights_path = output_weights_path)
     
-    analysis_and_write(params,output_weights_path,fig_directory,run_name)
+    pickle.dump( params, open( params_path, "wb" ) )
+    
+#    analysis_and_write(params,output_weights_path,fig_directory,run_name)
 
-#    data = generator.next()
-#    #output,states = model.test(sess, input, weights_path = weights_path)
-#    
-#    
-#    W = model.W_rec.eval(session=sess)
-#    U = model.W_in.eval(session=sess)
-#    Z = model.W_out.eval(session=sess)
-#    brec = model.b_rec.eval(session=sess)
-#    bout = model.b_out.eval(session=sess)
-#    
-#    sim = Simulator(params, weights_path=weights_path)
-#    output,states = sim.run_trial(data[0][0,:,:],t_connectivity=False)
-#    
-#    s = np.zeros([states.shape[0],batch_size,n_hidden])
-#    for ii in range(batch_size): 
-#        s[:,ii,:] = sim.run_trial(data[0][ii,:,:],t_connectivity=False)[1].reshape([states.shape[0],n_hidden])
     
     sess.close()
 
