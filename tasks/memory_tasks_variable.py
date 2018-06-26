@@ -819,7 +819,7 @@ if __name__ == "__main__":
     parser.add_argument('run_name', help="task name", type=str)
     parser.add_argument('-m','--mem_gap', help="supply memory gap length", type=int,default=50)
     parser.add_argument('-v','--var_delay', help="supply variable memory gap delay", type=int,default=0)
-    parser.add_argument('-r','--rec_noise', help ="recurrent noise", type=float,default=0.0)
+    parser.add_argument('-r','--rec_noise', help ="recurrent noise", type=float,default=0.1)
     parser.add_argument('-i','--initialization', help ="initialization of Wrec", type=str,default='gauss')
     parser.add_argument('-t','--training_iters', help="training iterations", type=int,default=300000)
     args = parser.parse_args()
@@ -891,23 +891,39 @@ if __name__ == "__main__":
     w_initializer = weight_initializer(params,output_weights_path[:-4] + '_init',autapses=autapses)
     input_weights_path = w_initializer.gen_weight_dict()
     params['load_weights_path'] = input_weights_path + '.npz'
-    
-    generator = generate_train_trials(params)
-    #model = Model(n_in, n_hidden, n_out, n_steps, tau, dt, dale_ratio, rec_noise, batch_size)
-    model = Model(params)
-    sess = tf.Session()
-    
-    
-    
-    model.train(sess, generator, learning_rate = learning_rate, 
-                training_iters = training_iters, save_weights_path = output_weights_path)
-    
-    pickle.dump( params, open( params_path, "wb" ) )
-    
-#    analysis_and_write(params,output_weights_path,fig_directory,run_name)
+
+
+    # curriculum learning
+    mem_gaps = range(40, mem_gap_length+10, 20)
+    training_iters = args.training_iters
+
+    # train loop
+    for mem_gap in mem_gaps:
+        print mem_gap
+        tf.reset_default_graph()
+        # params['rec_noise'] = 0.0
+        params['mem_gap'] = mem_gap
+        params['N_steps'] = input_wait + var_in_wait + stim_dur + params[
+            'mem_gap'] + var_delay_length + stim_dur + out_gap + var_out_gap + out_dur
+        if mem_gap == mem_gaps[-1]:
+            training_iters = args.training_iters
+
+        generator = generate_train_trials(params)
+        model = Model(params)
+
+        sess = tf.Session()
+        t = model.train(sess, generator, learning_rate=learning_rate, training_iters=training_iters,
+                        save_weights_path=output_weights_path, display_step=display_step, batch_size=batch_size)
+
+        sess.close()
+
+        params['load_weights_path'] = output_weights_path
+        training_iters = 100000
+
+    # save train params
+    pickle.dump(params, open(params_path, "wb"))
 
     
-    sess.close()
 
 
 
