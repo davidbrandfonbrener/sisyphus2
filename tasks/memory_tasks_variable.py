@@ -835,9 +835,9 @@ if __name__ == "__main__":
     
     #task params
     mem_gap_length = args.mem_gap
-    input_wait = 40
+    input_wait = 20
     stim_dur = 10
-    out_gap = 0
+    out_gap = 10 #20
     out_dur = 60
     
     var_delay_length = args.var_delay
