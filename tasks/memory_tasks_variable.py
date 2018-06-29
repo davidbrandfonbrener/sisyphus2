@@ -817,7 +817,7 @@ if __name__ == "__main__":
     
     parser = argparse.ArgumentParser()
     parser.add_argument('run_name', help="task name", type=str)
-    parser.add_argument('-m','--mem_gap', help="supply memory gap length", type=int,default=50)
+    parser.add_argument('-m','--mem_gap', help="supply memory gap length", type=int,default=200)
     parser.add_argument('-v','--var_delay', help="supply variable memory gap delay", type=int,default=0)
     parser.add_argument('-r','--rec_noise', help ="recurrent noise", type=float,default=0.1)
     parser.add_argument('-i','--initialization', help ="initialization of Wrec", type=str,default='gauss')
@@ -844,7 +844,7 @@ if __name__ == "__main__":
     var_in_wait = 0
     var_out_gap = 0
     p_stimulus = [.5,.5]
-    second_in_scale = 0.  #Only one input period or two (e.g. mem saccade no distractor vs with distractor)
+    second_in_scale = 1.  #Only one input period or two (e.g. mem saccade no distractor vs with distractor)
     go_cue = True
     
     
@@ -879,7 +879,7 @@ if __name__ == "__main__":
                     var_delay_length=var_delay_length, go_cue = go_cue,
                     var_in_wait = var_in_wait, var_out_gap = var_out_gap,
                     rec_noise=rec_noise, stim_noise=stim_noise, 
-                    dale_ratio=dale_ratio, dt=dt, tau=tau,
+                    dale_ratio=dale_ratio, dt=dt, tau=tau, init_type = init_type,
                     second_in_scale=second_in_scale,
                     L2_firing_rate=L2_firing_rate,L1_rec=L1_rec,L1_in=L1_in,L1_out=L1_out)
     
