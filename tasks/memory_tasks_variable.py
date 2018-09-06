@@ -21,7 +21,7 @@ def set_params(n_in = 12, n_out = 2, input_wait = 30, mem_gap = 40, stim_dur = 1
                var_out_gap = 0, stim_noise = 0, rec_noise = .1, L1_rec = 0, L1_in = 0, L1_out = 0, 
                L2_firing_rate = 1, sample_size = 128, epochs = 100,
                N_rec = 50, dale_ratio=0.8, tau=100.0, dt = 10.0, biases = True,
-               second_in_scale = 1, go_cue= True,task='xor',init_type= 'gauss'):
+               second_in_scale = 1, go_cue= True,task='xor',mask_to_out=True,init_type= 'gauss'):
     
     params = dict()
     params['go_cue']           = go_cue
@@ -57,6 +57,7 @@ def set_params(n_in = 12, n_out = 2, input_wait = 30, mem_gap = 40, stim_dur = 1
     params['biases']           = biases
     params['second_in_scale']  = second_in_scale #If = 0, no second input
     params['p_stimulus']       = p_stimulus
+    params['mask_to_out']      = mask_to_out
 
     return params
 
@@ -175,7 +176,8 @@ def build_train_trials(params):
         mask[sample,range(input_wait+var_in[sample]+stim_dur+mem_gap+var_delay[sample]+ stim_dur + out_gap + var_out[sample],
                           input_wait+var_in[sample]+stim_dur+mem_gap+var_delay[sample]+ stim_dur + out_gap + var_out[sample]+10),:] = 0
         #Mask until output
-        mask[sample,range(0,input_wait+var_in[sample]+stim_dur+mem_gap+var_delay[sample]+ stim_dur + out_gap + var_out[sample]+10),:] = 0
+        if params['mask_to_out']:
+            mask[sample,range(0,input_wait+var_in[sample]+stim_dur+mem_gap+var_delay[sample]+ stim_dur + out_gap + var_out[sample]+10),:] = 0
              
     #note:#TODO im doing a quick fix, only considering 1 ouput neuron
     
